@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Ledger Entry</title>
+    <style>
+        body {
+            background: #f7f9fb;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .update-container {
+            max-width: 400px;
+            margin: 40px auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 2px 16px #0001;
+            padding: 32px 28px 24px 28px;
+        }
+        h2 {
+            text-align: center;
+            color: #3b5ed7;
+            margin-bottom: 28px;
+            font-size: 1.6em;
+            letter-spacing: 1px;
+        }
+        .form-row {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            color: #222;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 9px 12px;
+            border: 1px solid #c3cbe4;
+            border-radius: 6px;
+            font-size: 1em;
+            background: #f5f7fa;
+            transition: border 0.2s;
+        }
+        input[type="text"]:focus, input[type="date"]:focus {
+            border: 1.5px solid #3b5ed7;
+            outline: none;
+            background: #fff;
+        }
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 22px;
+        }
+        button[type="submit"] {
+            background: #3b5ed7;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 9px 28px;
+            font-size: 1em;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s;
+            box-shadow: 0 1px 4px #3b5ed733;
+        }
+        button[type="submit"]:hover {
+            background: #2546b2;
+        }
+        .cancel-link {
+            color: #3b5ed7;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 8px 18px;
+            border-radius: 6px;
+            transition: background 0.2s, color 0.2s;
+        }
+        .cancel-link:hover {
+            background: #e5eafc;
+            color: #2546b2;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="update-container">
+        <h2>Update Ledger Entry</h2>
+        <form method="POST" action="{{ url_for('update_ledger', id=item['id']) }}">
+            <div class="form-row">
+                <label>Category:</label>
+                <input type="text" name="category" value="{{ item['category'] }}" required>
+            </div>
+            <div class="form-row">
+                <label>Item Name:</label>
+                <input type="text" name="item_name" value="{{ item['item_name'] }}" required>
+            </div>
+            <div class="form-row">
+                <label>Head:</label>
+                <input type="text" name="head" value="{{ item['head'] }}">
+            </div>
+            <div class="form-row">
+                <label>Ledger Page No:</label>
+                <input type="text" name="ledger_page_no" value="{{ item['ledger_page_no'] }}">
+            </div>
+            <div class="form-row">
+                <label>Opening Date:</label>
+                <input type="date" name="opening_date" value="{{ item['opening_date'] }}">
+            </div>
+            <div class="form-actions">
+                <button type="submit">Update</button>
+                <a href="{{ url_for('ledger') }}" class="cancel-link">Cancel</a>
+            </div>
+        </form>
+    </div>
+</body>
+</html>

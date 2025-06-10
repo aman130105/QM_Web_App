@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Update Item Category</title>
+    <style>
+        .update-container {
+            max-width: 400px;
+            margin: 50px auto;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 16px #0001;
+            padding: 32px;
+        }
+        .form-row {
+            margin-bottom: 18px;
+        }
+        label {
+            display: block;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+        .btn-row {
+            display: flex;
+            gap: 12px;
+            margin-top: 18px;
+        }
+        button, .btn-cancel {
+            padding: 8px 22px;
+            border-radius: 6px;
+            border: none;
+            font-size: 1em;
+            cursor: pointer;
+        }
+        button[type="submit"] {
+            background: #2d8cf0;
+            color: #fff;
+        }
+        .btn-cancel {
+            background: #eee;
+            color: #222;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        button[type="submit"]:hover { background: #1762a7; }
+        .btn-cancel:hover { background: #ddd; }
+    </style>
+</head>
+<body>
+<div class="update-container">
+    <h2>Update Item Category</h2>
+    <form method="POST" action="{{ url_for('update_category', id=category['id']) }}">
+        <div class="form-row">
+            <label for="category_name">Category Name:</label>
+            <input type="text" name="category_name" id="category_name" value="{{ category['category_name'] }}" required>
+        </div>
+        <div class="btn-row">
+            <button type="submit">Update</button>
+            <a href="{{ url_for('items_category') }}" class="btn-cancel">Cancel</a>
+        </div>
+    </form>
+</div>
+</body>
+</html>

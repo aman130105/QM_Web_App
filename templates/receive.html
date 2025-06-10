@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>CISF UNIT ASG BANGALORE - Receive Items</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #e0eafc, #cfdef3 100%);
+        }
+        .card {
+            border-radius: 18px;
+            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+        }
+        .form-label {
+            font-weight: 500;
+        }
+        .form-control:focus {
+            border-color: #4e73df;
+            box-shadow: 0 0 0 0.2rem rgba(78,115,223,.25);
+        }
+        .btn-success {
+            background: linear-gradient(90deg, #4e73df 0%, #1cc88a 100%);
+            border: none;
+        }
+        .btn-success:hover {
+            background: linear-gradient(90deg, #1cc88a 0%, #4e73df 100%);
+        }
+        .btn-secondary {
+            background: #6c757d;
+            border: none;
+        }
+        .table-responsive {
+            max-height: 500px; /* pehle 250px tha */
+            overflow-y: auto;
+        }
+        .tree-table th {
+            background: #4e73df;
+            color: #fff;
+            position: sticky;
+            top: 0;
+        }
+        .tree-table tr {
+            transition: background-color 0.2s;
+        }
+        .tree-table tr:hover {
+            background: #f1f7ff;
+        }
+    </style>
+    <script>
+    function updateDescriptionOptions() {
+        var category = document.getElementById('category').value;
+        var descSelect = document.getElementById('item_name');
+        var options = JSON.parse('{{ items_by_category|tojson|safe }}');
+        descSelect.innerHTML = '<option value="">Select Description</option>';
+        if (options[category]) {
+            options[category].forEach(function(item) {
+                descSelect.innerHTML += '<option value="' + item + '">' + item + '</option>';
+            });
+        }
+        // Clear autofill fields
+        document.getElementsByName('head')[0].value = '';
+        document.getElementsByName('ledger_page_no')[0].value = '';
+        document.getElementsByName('available_stock')[0].value = '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('item_name').addEventListener('change', function() {
+            var category = document.getElementById('category').value;
+            var item_name = this.value;
+            if (category && item_name) {
+                fetch('/get_ledger_info', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                    body: 'category=' + encodeURIComponent(category) + '&item_name=' + encodeURIComponent(item_name)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementsByName('head')[0].value = data.head || '';
+                    document.getElementsByName('ledger_page_no')[0].value = data.ledger_page_no || '';
+                    document.getElementsByName('available_stock')[0].value = data.available_stock || '';
+                });
+            }
+        });
+    });
+    </script>
+</head>
+<body>
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card p-4 mb-4">
+                <h3 class="mb-4 text-center"><i class="fa-solid fa-boxes-stacked me-2"></i>Receive Items</h3>
+                {% if message %}
+                    <div class="alert alert-success">{{ message }}</div>
+                {% endif %}
+                <form method="POST">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Item Category</label>
+                            <select name="category" id="category" class="form-control" required onchange="updateDescriptionOptions()">
+                                <option value="">Select Category</option>
+                                {% for cat in categories %}
+                                <option value="{{ cat }}">{{ cat }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Description</label>
+                            <select name="item_name" id="item_name" class="form-control" required>
+                                <option value="">Select Description</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Head</label>
+                            <input type="text" name="head" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Ledger Page No.</label>
+                            <input type="text" name="ledger_page_no" class="form-control" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Available Stock</label>
+                            <input type="text" name="available_stock" class="form-control" readonly value="{{ available_stock or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Receive Qty</label>
+                            <input type="number" name="qty" class="form-control" required min="1">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Price/Unit</label>
+                            <input type="text" name="price_unit" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Remark</label>
+                            <input type="text" name="remarks" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Issue Date</label>
+                            <input type="date" name="date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="submit" class="btn btn-success px-4"><i class="fa-solid fa-floppy-disk me-2"></i>Save</button>
+                        <a href="/dashboard" class="btn btn-secondary px-4"><i class="fa-solid fa-arrow-left me-2"></i>Back</a>
+                    </div>
+                </form>
+            </div>
+            <!-- Treeview Table -->
+            <div class="card p-3">
+                <h5 class="mb-3 text-primary"><i class="fa-solid fa-tree me-2"></i>Recent Received Items</h5>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-hover tree-table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Category</th>
+                                <th>Description</th>
+                                <th>Head</th>
+                                <th>Ledger Page No.</th>
+                                <th>Available Stock</th>
+                                <th>Qty</th>
+                                <th>Price/Unit</th>
+                                <th>Remark</th>
+                                <th>Date</th>
+                                <th style="width:110px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if entries %}
+                                {% for entry in entries %}
+                                <tr>
+                                    <td>{{ entry.category }}</td>
+                                    <td>{{ entry.item_name }}</td>
+                                    <td>{{ entry.head }}</td>
+                                    <td>{{ entry.ledger_page_no }}</td>
+                                    <td>{{ entry.available_stock }}</td>
+                                    <td>{{ entry.qty }}</td>
+                                    <td>{{ entry.price_unit }}</td>
+                                    <td>{{ entry.remarks }}</td>
+                                    <td>{{ entry.date }}</td>
+                                    <td>
+                                        <button type="button" class="btn btn-sm btn-info me-1" onclick="printReceiveVoucher('{{ entry.id }}')" title="Print">
+                                            <i class="fa-solid fa-print"></i>
+                                        </button>
+                                        <a href="{{ url_for('update_receive', id=entry.id) }}" class="btn btn-sm btn-warning me-1">
+                                            <i class="fa-solid fa-pen-to-square"></i>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('delete_receive', id=entry.id) }}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this entry?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="fa-solid fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="10" class="text-center text-muted">No entries found.</td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- End Treeview Table -->
+        </div>
+    </div>
+</div>
+
+<!-- Voucher Print Template -->
+<div id="voucher-print-area" style="display:none;"></div>
+<script>
+function printReceiveVoucher(receiveId) {
+    const entriesData = JSON.parse('{{ entries|tojson|safe }}');
+    const data = entriesData.find(e => e.id == receiveId);
+
+    if (!data) {
+        alert("Entry not found!");
+        return;
+    }
+
+    const html = `
+    <div style="width:210mm;min-height:297mm;padding:0 15mm 0 15mm;font-family:'Arial',sans-serif;font-size:15px;">
+        <!-- Top Info Row -->
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-top:18px;">
+            <div style="flex:1;text-align:left;font-size:15px;line-height:1.2;">
+                <div>Ph: 080 -22001521</div>
+                <div>Email: bangalore-apsu@cisf.gov.in</div>
+            </div>
+            <div style="flex:0 0 150px;text-align:center;">
+                <img src="/static/cisf_logo.png" alt="CISF Logo" style="height:110px;">
+            </div>
+            <div style="flex:1;text-align:right;font-size:15px;line-height:1.2;">
+                <div>Office of the DIG/CASO</div>
+                <div>CISF Unit ASG Bangalore</div>
+                <div>ISO 9001:2015 Certified</div>
+            </div>
+        </div>
+        <!-- Heading -->
+        <div style="text-align:center;font-weight:bold;font-size:2rem;margin:32px 0 18px 0;letter-spacing:1px;">
+            ISSUE/EXPENSE/RECEIVE: <span style="color:#d7263d;">VOUCHER</span>
+        </div>
+        <!-- IV/RV Info Row -->
+        <div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:0;">
+            <div>
+                <div>(To be completed by issuing officer)</div>
+                <div>IV No. &nbsp;/CISF/ASG(B)/QM/2025</div>
+                <div>DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025</div>
+                <div>CISF UNIT ASG BANGALORE-560300</div>
+            </div>
+            <div style="text-align:right;">
+                <div>(To be completed by receiving officer)</div>
+                <div>RV No. /CISF/ASG(B)/QM/2025</div>
+                <div>DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025</div>
+                <div>CISF UNIT ASG BANGALORE-560300</div>
+            </div>
+        </div>
+        <!-- Article Info -->
+        <div style="margin:18px 0 0 0;font-size:15px;">
+            This article enumerated below have been received from the following source : <b>${data.head}</b>
+        </div>
+        <div style="margin-bottom:8px;font-size:15px;">
+            Authority: Dy. Inspector General/CASO, CISF Unit ASG Bangalore
+        </div>
+        <!-- Table -->
+        <table border="1" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:15px;margin-top:8px;">
+            <thead>
+                <tr style="background:#f1f1f1;">
+                    <th style="width:40px;">S.No</th>
+                    <th>Name (Description)</th>
+                    <th>Head</th>
+                    <th>Qty</th>
+                    <th>L/Page No.</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>1</td>
+                    <td>
+                        ${data.item_name}
+                        ${data.remarks && data.remarks.trim() ? `<br><i style="font-size:0.95em;color:#555;">(${data.remarks})</i>` : ""}
+                    </td>
+                    <td><b>${data.head}</b></td>
+                    <td>${data.qty}</td>
+                    <td>${data.ledger_page_no}</td>
+                </tr>
+            </tbody>
+        </table>
+       <div style="text-align:center;font-weight:bold;margin:10px 0 0 0;">(Only One Item)</div>
+        <div style="display:flex;justify-content:space-between;margin-top:50px;font-size:14px;">
+            <div>
+                <div>Issued by</div>
+                <div>CISF No............................</div>
+                <div>Rank:...............................</div>
+                <div>Name:...............................
+                    <span style="display:inline-block;width:1in;"></span>
+                    CISF ASG BENGALURU
+                </div>
+            </div>
+            <div>
+                <div>Collected by</div>
+                <div>CISF No............................</div>
+                <div>Rank:...............................</div>
+                <div>Name:...............................
+                    <span style="display:inline-block;width:1in;"></span>
+                    CISF ASG BENGALURU
+                </div>
+            </div>
+            <div>
+                <div>Received by</div>
+                <div>CISF No............................</div>
+                <div>Rank:...............................</div>
+                <div>Name:...............................
+                    <span style="display:inline-block;width:1in;"></span>
+                    CISF ASG BENGALURU
+                </div>
+            </div>
+        </div>
+    </div>
+    `;
+
+    const printArea = document.getElementById('voucher-print-area');
+    printArea.innerHTML = html;
+    printArea.style.display = 'block';
+
+    const win = window.open('', '', 'width=900,height=1200');
+    win.document.write('<html><head><title>Voucher Print</title>');
+    win.document.write('<style>@media print { body { margin:0; } }</style>');
+    win.document.write('</head><body>');
+    win.document.write(printArea.innerHTML);
+    win.document.write('</body></html>');
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+        win.print();
+        win.close();
+        printArea.style.display = 'none';
+    }, 500);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complete Transaction Report</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { background: #dbeafe; font-family: Arial, sans-serif; }
+        .report-container { background: #fff; margin: 20px auto; padding: 10px 0 20px 0; border-radius: 10px; width: 97%; }
+        .report-title { text-align: center; font-size: 2rem; font-weight: bold; margin: 10px 0 20px 0; }
+        .filters { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px; }
+        .filters select, .filters input[type="date"], .filters input[type="text"] { padding: 4px 8px; font-size: 1rem; border-radius: 4px; border: 1px solid #bbb; }
+        .filters button, .filters input[type="button"] { padding: 7px 30px; font-size: 1.1rem; border-radius: 6px; border: none; margin-left: 10px; }
+        .filters .search-btn { background: #22c55e; color: #fff; font-weight: bold; }
+        .filters .clear-btn { background: #a78bfa; color: #fff; font-weight: bold; }
+        table { width: 98%; margin: 0 auto; border-collapse: collapse; background: #fff; }
+        th, td { border: 1px solid #bbb; padding: 7px 8px; font-size: 1.08rem; }
+        th { background: #f5f5f5; color: #222; font-weight: bold; }
+        .totals-row { background: #111; color: #ffe600; font-size: 1.3rem; font-weight: bold; text-align: center; }
+        .actions { display: flex; justify-content: center; gap: 30px; margin: 18px 0 0 0; }
+        .actions button, .actions input[type="button"] { font-size: 1.1rem; padding: 10px 30px; border-radius: 7px; border: none; font-weight: bold; }
+        .actions .excel { background: #2563eb; color: #fff; }
+        .actions .pdf { background: #facc15; color: #222; }
+        .actions .back { background: #ef4444; color: #fff; }
+        .table-scroll { max-height: 400px; overflow-y: auto; margin-bottom: 0; }
+        @media (max-width: 900px) {
+            .report-container { width: 100%; }
+            table, th, td { font-size: 0.95rem; }
+        }
+    </style>
+</head>
+<body>
+<div class="report-container">
+    <div class="report-title">Complete Transaction Report</div>
+    <form method="get" class="filters">
+        <select name="category">
+            <option value="">All</option>
+            {% for cat in categories %}
+                <option value="{{cat}}" {% if request.args.get('category')==cat %}selected{% endif %}>{{cat}}</option>
+            {% endfor %}
+        </select>
+        <select name="item">
+            <option value="">All</option>
+            {% for item in items %}
+                <option value="{{item}}" {% if request.args.get('item')==item %}selected{% endif %}>{{item}}</option>
+            {% endfor %}
+        </select>
+        <select name="head">
+            <option value="">All</option>
+            {% for head in heads %}
+                <option value="{{head}}" {% if request.args.get('head')==head %}selected{% endif %}>{{head}}</option>
+            {% endfor %}
+        </select>
+        <select name="office">
+            <option value="">All</option>
+            {% for office in offices %}
+                <option value="{{office}}" {% if request.args.get('office')==office %}selected{% endif %}>{{office}}</option>
+            {% endfor %}
+        </select>
+        <input type="date" name="from_date" value="{{ request.args.get('from_date', '') or '2000-01-01' }}">
+        <input type="date" name="to_date" value="{{ request.args.get('to_date', '') or now().strftime('%Y-%m-%d') }}">
+        <button type="submit" class="search-btn"><i class="fa fa-search"></i> Search</button>
+        <input type="button" class="clear-btn" value="Clear" onclick="window.location='{{ url_for('report') }}'">
+    </form>
+    <div class="table-scroll">
+    <table>
+        <thead>
+            <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Item</th>
+                <th>Description</th>
+                <th>Head</th>
+                <th>L/P No.</th>
+                <th>Previous</th>
+                <th>Received</th>
+                <th>Issue</th>
+                <th>Office</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in transactions %}
+            <tr>
+                <td>{{ t.date }}</td>
+                <td>{{ t.type }}</td>
+                <td>{{ t.item }}</td>
+                <td>{{ t.description }}</td>
+                <td>{{ t.head }}</td>
+                <td>{{ t.lp_no }}</td>
+                <td>{{ t.previous }}</td>
+                <td>{{ t.received }}</td>
+                <td>{{ t.issued }}</td>
+                <td>{{ t.office }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    <div class="totals-row">
+        <span style="width:33%;display:inline-block;">Total Stock Received = {{ total_received }}</span>
+        <span style="width:33%;display:inline-block;">Total Stock Issued = {{ total_issued }}</span>
+        <span style="width:33%;display:inline-block;">Total Stock Balance = {{ total_balance }}</span>
+    </div>
+    <div class="actions">
+        <button type="button" class="excel"
+            onclick="window.location='{{ url_for('export_excel', **request.args) }}'">
+            <i class="fa fa-file-excel"></i> Export Excel
+        </button>
+        <!-- PDF button (future) -->
+        <!-- <button type="button" class="pdf" disabled><i class="fa fa-file-pdf"></i> Export PDF</button> -->
+        <button type="button" class="back" onclick="window.location='{{ url_for("dashboard") }}'">
+            <i class="fa fa-arrow-left"></i> Back
+        </button>
+    </div>
+</div>
+</body>
+</html>

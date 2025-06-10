@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Head & Office Master</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        body { background: #f6f8fa; }
+        .master-title { font-size: 2rem; font-weight: 700; text-align: center; margin: 30px 0 20px 0; letter-spacing: 1px; }
+        .panel-divider { border-left: 2px solid #dee2e6; height: 100%; }
+        .panel-header { font-weight: 600; font-size: 1.1rem; margin-bottom: 10px; }
+        .action-btns button { min-width: 90px; font-weight: 600; }
+        .table thead th { background: #4e73df; color: #fff; text-align: center; }
+        .table tbody td { vertical-align: middle; text-align: center; }
+        .back-btn { font-size: 1.2rem; font-weight: 600; width: 140px; }
+        .form-control:focus { border-color: #4e73df; box-shadow: 0 0 0 0.2rem rgba(78,115,223,.15); }
+        .btn-edit {
+            background: #ffc107;
+            color: #212529;
+            border: none;
+            font-size: 1.1rem;
+            padding: 6px 14px;
+            border-radius: 8px;
+        }
+        .btn-edit:hover { background: #e0a800; color: #fff; }
+        .btn-delete {
+            background: #dc3545;
+            color: #fff;
+            border: none;
+            font-size: 1.1rem;
+            padding: 6px 14px;
+            border-radius: 8px;
+        }
+        .btn-delete:hover { background: #b52a37; }
+        @media (max-width: 991px) {
+            .panel-divider { border-left: none; border-top: 2px solid #dee2e6; height: 2px; margin: 30px 0; }
+        }
+    </style>
+</head>
+<body>
+<div class="container-fluid">
+    <div class="master-title">Head & Office Master</div>
+    <div class="row justify-content-center">
+        <!-- Head Panel -->
+        <div class="col-lg-5 col-md-12 mb-4">
+            <div class="card p-4">
+                <div class="panel-header mb-3">Head Name:</div>
+                <form method="POST" action="{{ url_for('manage_head_office') }}" class="row g-2 align-items-center mb-3">
+                    <div class="col-12 col-md-8">
+                        <input type="text" name="head" class="form-control" placeholder="Enter Head Name" value="{{ head_form_value or '' }}" required>
+                        <input type="hidden" name="form_type" value="head">
+                        <input type="hidden" name="head_id" value="{{ head_id or '' }}">
+                    </div>
+                    <div class="col-12 col-md-4 action-btns d-flex gap-2">
+                        <button type="submit" name="action" value="save" class="btn btn-success">Save</button>
+                        {% if head_id %}
+                        <button type="submit" name="action" value="update" class="btn btn-warning text-white">Update</button>
+                        <button type="submit" name="action" value="delete" class="btn btn-danger">Delete</button>
+                        {% endif %}
+                    </div>
+                </form>
+                <div class="table-responsive" style="max-height: 350px;">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Head Name</th>
+                                <th style="width:120px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for head in heads %}
+                            <tr>
+                                <td>{{ head.id }}</td>
+                                <td>{{ head.head }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('manage_head_office') }}" style="display:inline;">
+                                        <input type="hidden" name="form_type" value="head_select">
+                                        <input type="hidden" name="head_id" value="{{ head.id }}">
+                                        <button type="submit" class="btn-edit" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('manage_head_office') }}" style="display:inline;" onsubmit="return confirm('Delete this head?');">
+                                        <input type="hidden" name="form_type" value="head">
+                                        <input type="hidden" name="head_id" value="{{ head.id }}">
+                                        <button type="submit" name="action" value="delete" class="btn-delete" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <!-- Divider -->
+        <div class="col-lg-1 d-none d-lg-flex justify-content-center align-items-center">
+            <div class="panel-divider"></div>
+        </div>
+        <!-- Office Panel -->
+        <div class="col-lg-5 col-md-12 mb-4">
+            <div class="card p-4">
+                <div class="panel-header mb-3">Office Name:</div>
+                <form method="POST" action="{{ url_for('manage_head_office') }}" class="row g-2 align-items-center mb-3">
+                    <div class="col-12 col-md-8">
+                        <input type="text" name="office_name" class="form-control" placeholder="Enter Office Name" value="{{ office_form_value or '' }}" required>
+                        <input type="hidden" name="form_type" value="office">
+                        <input type="hidden" name="office_id" value="{{ office_id or '' }}">
+                    </div>
+                    <div class="col-12 col-md-4 action-btns d-flex gap-2">
+                        <button type="submit" name="action" value="save" class="btn btn-success">Save</button>
+                        {% if office_id %}
+                        <button type="submit" name="action" value="update" class="btn btn-warning text-white">Update</button>
+                        <button type="submit" name="action" value="delete" class="btn btn-danger">Delete</button>
+                        {% endif %}
+                    </div>
+                </form>
+                <div class="table-responsive" style="max-height: 350px;">
+                    <table class="table table-bordered table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Office Name</th>
+                                <th style="width:120px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for office in offices %}
+                            <tr>
+                                <td>{{ office.id }}</td>
+                                <td>{{ office.office_name }}</td>
+                                <td>
+                                    <form method="POST" action="{{ url_for('manage_head_office') }}" style="display:inline;">
+                                        <input type="hidden" name="form_type" value="office_select">
+                                        <input type="hidden" name="office_id" value="{{ office.id }}">
+                                        <button type="submit" class="btn-edit" title="Edit"><i class="fa-solid fa-pen-to-square"></i></button>
+                                    </form>
+                                    <form method="POST" action="{{ url_for('manage_head_office') }}" style="display:inline;" onsubmit="return confirm('Delete this office?');">
+                                        <input type="hidden" name="form_type" value="office">
+                                        <input type="hidden" name="office_id" value="{{ office.id }}">
+                                        <button type="submit" name="action" value="delete" class="btn-delete" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row justify-content-center mb-4">
+        <div class="col-12 text-center">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-danger back-btn mt-3">Back</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
