@@ -113,22 +113,48 @@
     </div>
     <form method="get">
         <div class="form-row">
-            <label for="item">Select Item:</label>
-            <select name="item" id="item" required>
-                <option value="">--Select--</option>
-                {% for item in items %}
-                    <option value="{{ item }}" {% if item == selected_item %}selected{% endif %}>{{ item }}</option>
+            <label for="category">Items Category:</label>
+            <select name="category" id="category" required>
+                <option value="">--Select Category--</option>
+                {% for cat in categories %}
+                    <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+                {% endfor %}
+            </select>
+            <label for="description">Description:</label>
+            <select name="description" id="description" required>
+                <option value="">--Select Description--</option>
+                {% for desc in descriptions %}
+                    <option value="{{ desc }}" {% if desc == selected_description %}selected{% endif %}>{{ desc }}</option>
                 {% endfor %}
             </select>
             <button type="submit"><i class="fa fa-search"></i> Show Ledger</button>
         </div>
     </form>
-    {% if selected_item %}
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const categorySelect = document.getElementById('category');
+        const descriptionSelect = document.getElementById('description');
+        categorySelect.addEventListener('change', function() {
+            const cat = this.value;
+            descriptionSelect.innerHTML = '<option value="">Loading...</option>';
+            fetch('/get_descriptions?category=' + encodeURIComponent(cat))
+                .then(resp => resp.json())
+                .then(data => {
+                    let options = '<option value="">--Select Description--</option>';
+                    for (const desc of data) {
+                        options += `<option value="${desc}">${desc}</option>`;
+                    }
+                    descriptionSelect.innerHTML = options;
+                });
+        });
+    });
+    </script>
+    {% if selected_category and selected_description %}
     <div class="info-bar">
-        <div><span>Item:</span> {{ selected_item }}</div>
+        <div><span>Category:</span> {{ selected_category }}</div>
+        <div><span>Description:</span> {{ selected_description }}</div>
         {% if item_info %}
             <div><span>Head:</span> {{ item_info['head'] }}</div>
-            <div><span>Description:</span> {{ item_info['description'] }}</div>
             <div><span>Ledger Page No:</span> {{ item_info['ledger_page_no'] }}</div>
         {% endif %}
     </div>

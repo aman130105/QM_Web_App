@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+    <h2 style="text-align:center;">Register</h2>
+    <form method="post" action="{{ url_for('register') }}" style="max-width:300px;margin:auto;">
+        <label>Username:</label>
+        <input type="text" name="username" required style="width:100%;margin-bottom:10px;">
+        <label>Password:</label>
+        <input type="password" name="password" required style="width:100%;margin-bottom:10px;">
+        <button type="submit" style="width:100%;">Register</button>
+        {% if error %}
+            <div style="color: red; text-align: center; margin-top: 10px;">{{ error }}</div>
+        {% endif %}
+    </form>
+    <div style="text-align:center;margin-top:10px;">
+        <a href="{{ url_for('login') }}">Back to Login</a>
+    </div>
+</body>
+</html>

@@ -53,7 +53,11 @@
         <select name="office">
             <option value="">All</option>
             {% for office in offices %}
-                <option value="{{office}}" {% if request.args.get('office')==office %}selected{% endif %}>{{office}}</option>
+                {% if office is string %}
+                    <option value="{{ office }}" {% if request.args.get('office')==office %}selected{% endif %}>{{ office }}</option>
+                {% elif office.office_name is defined %}
+                    <option value="{{ office.office_name }}" {% if request.args.get('office')==office.office_name %}selected{% endif %}>{{ office.office_name }}</option>
+                {% endif %}
             {% endfor %}
         </select>
         <input type="date" name="from_date" value="{{ request.args.get('from_date', '') or '2000-01-01' }}">
