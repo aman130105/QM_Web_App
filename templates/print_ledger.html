@@ -1,201 +1,407 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Print Ledger Page</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <style>
         body {
-            background: #dedede;
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Arial, sans-serif;
             margin: 0;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            min-height: 100vh;
         }
         .main-card {
             background: #fff;
-            margin: 30px auto;
-            padding: 20px 20px 0 20px;
-            border-radius: 8px;
-            max-width: 98vw;
-            box-shadow: 0 2px 8px #bbb;
+            margin: 36px auto 0 auto;
+            padding: 32px 36px 36px 36px;
+            border-radius: 16px;
+            max-width: 1100px;
+            box-shadow: 0 8px 32px #0002;
         }
-        .header-row {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background: #dedede;
-            padding: 10px 0 0 0;
+        .header {
+            margin-bottom: 18px;
+            text-align: center;
         }
-        .header-row h2 {
-            color: #2471A3;
-            font-size: 2em;
-            margin: 0 auto;
+        .header p {
+            margin: 2px 0;
+            font-size: 1.03em;
+            color: #374151;
+        }
+        .header .title {
+            font-size: 2.1em;
             font-weight: bold;
-        }
-        .form-row {
-            display: flex;
-            align-items: center;
+            color: #d90429;
             margin: 10px 0 0 0;
-            gap: 10px;
+            letter-spacing: 2px;
+            text-decoration: underline;
         }
-        .form-row label {
-            font-weight: bold;
-            font-size: 1.1em;
+        .form-section {
+            margin-bottom: 24px;
+            padding: 18px 0 10px 0;
+            border-radius: 8px;
+            background: #f1f5fa;
+            display: flex;
+            justify-content: center;
+            gap: 18px;
+            align-items: flex-end;
+            flex-wrap: wrap;
         }
-        .form-row select, .form-row button {
+        .form-section label {
+            margin-right: 8px;
+            font-weight: 600;
+            color: #2d3a4a;
+            font-size: 1.08em;
+        }
+        .form-section select {
+            padding: 7px 12px;
+            border-radius: 6px;
+            border: 1px solid #bfc9d9;
             font-size: 1em;
-            padding: 6px 10px;
-            border-radius: 4px;
-            border: 1px solid #aaa;
+            min-width: 180px;
+            transition: border 0.2s;
         }
-        .form-row button {
-            background: #007bff;
-            color: #fff;
+        .form-section select:focus {
+            border: 1.5px solid #2d8cf0;
+            outline: none;
+        }
+        .form-section button {
+            padding: 8px 22px;
+            background-color: #2d8cf0;
+            color: white;
             border: none;
+            border-radius: 6px;
+            font-size: 1.08em;
             font-weight: bold;
             cursor: pointer;
-            min-width: 120px;
+            transition: background 0.2s;
         }
-        .info-bar {
-            background: #dedede;
-            padding: 8px 10px;
-            margin: 10px 0 0 0;
-            font-size: 1.1em;
+        .form-section button:hover {
+            background: #1765ad;
+        }
+        .flex-container {
             display: flex;
-            flex-wrap: wrap;
-            gap: 30px;
+            gap: 32px;
+            align-items: flex-start;
+            margin-bottom: 24px;
         }
-        .info-bar span {
+        .treeview {
+            min-width: 260px;
+            max-width: 320px;
+            background: #f7fafd;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px #0001;
+            padding: 18px 18px 10px 18px;
+            margin: 0;
+            height: 100%;
+        }
+        .treeview h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.13em;
+            color: #1765ad;
             font-weight: bold;
         }
-        .ledger-table {
+        .treeview ul {
+            list-style-type: none;
+            padding-left: 18px;
+            margin: 0;
+        }
+        .treeview li {
+            margin: 4px 0;
+        }
+        .treeview .tree-item {
+            cursor: pointer;
+            padding: 4px 10px;
+            border-radius: 5px;
+            transition: background 0.2s, color 0.2s;
+            display: inline-block;
+        }
+        .treeview .tree-item.selected, .treeview .tree-item:hover {
+            background: #e3eafc;
+            color: #d90429;
+        }
+        .details {
+            flex: 1;
+            margin: 0 0 0 0;
+            text-align: left;
+            background: #f7fafd;
+            border-radius: 8px;
+            padding: 18px 24px 10px 24px;
+            box-shadow: 0 2px 8px #0001;
+            min-width: 300px;
+        }
+        .details p {
+            margin: 4px 0;
+            font-size: 1.08em;
+        }
+        .details strong {
+            color: #1765ad;
+        }
+        .transaction-table-container {
+            margin: 24px 0 0 0;
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px #0001;
+            overflow-x: auto;
+        }
+        table {
             width: 100%;
             border-collapse: collapse;
             background: #fff;
-            margin-top: 10px;
         }
-        .ledger-table th, .ledger-table td {
-            border: 1px solid #bbb;
-            padding: 8px 6px;
+        th, td {
+            border: 1px solid #e3e8f0;
+            padding: 10px 8px;
             text-align: center;
-            font-size: 1.08em;
+            font-size: 1.05em;
         }
-        .ledger-table th {
-            background: #f3f3f3;
-            font-size: 1.12em;
+        th {
+            background-color: #e3eafc;
+            font-weight: bold;
+            color: #1E1E27;
+        }
+        tr:nth-child(even) {
+            background: #f3f6fb;
+        }
+        tr:hover {
+            background: #e0e7ef;
         }
         .actions {
-            margin: 30px 0 20px 0;
-            text-align: center;
+            text-align: right;
+            max-width: 1000px;
+            margin: 24px auto 0 auto;
+            display: flex;
+            justify-content: flex-end;
+            gap: 16px;
         }
-        .actions button {
-            margin: 0 10px;
-            padding: 12px 32px;
-            font-size: 1.1em;
+        .actions a, .actions button {
+            padding: 10px 28px;
             border: none;
-            border-radius: 5px;
-            cursor: pointer;
+            border-radius: 6px;
+            font-size: 1.08em;
             font-weight: bold;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s, color 0.2s;
         }
-        .actions .pdf { background: #28a745; color: #fff; }
-        .actions .excel { background: #ffc107; color: #222; }
-        .actions .back { background: #dc3545; color: #fff; }
-        .actions .print { background: #007bff; color: #fff; }
+        .actions a {
+            background-color: #ffc107;
+            color: #222;
+        }
+        .actions a:hover {
+            background-color: #eab308;
+            color: #111;
+        }
+        .actions .back {
+            background-color: #ef4444;
+            color: #fff;
+        }
+        .actions .back:hover {
+            background-color: #b91c1c;
+        }
+        .actions .print {
+            background-color: #2d8cf0;
+            color: #fff;
+        }
+        .actions .print:hover {
+            background-color: #1765ad;
+        }
+        .no-data {
+            text-align: center;
+            color: #888;
+            margin: 24px 0;
+            font-size: 1.13em;
+        }
+        .signature {
+            margin-top: 40px;
+            text-align: right;
+            max-width: 1000px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .signature p {
+            margin: 5px 0;
+            font-size: 1.08em;
+        }
+        @media (max-width: 1100px) {
+            .main-card { padding: 12px 2vw 18px 2vw; }
+            table, th, td { font-size: 0.97em; }
+            .details, .treeview, .transaction-table-container { max-width: 98vw; }
+            .flex-container { flex-direction: column; gap: 18px; }
+        }
+        @media (max-width: 700px) {
+            .main-card { padding: 6px 0 10px 0; }
+            .form-section { flex-direction: column; gap: 10px; }
+            .actions { flex-direction: column; gap: 10px; }
+            .details, .treeview { padding: 10px 6px; }
+        }
         @media print {
-            .actions, .form-row, .header-row { display: none !important; }
-            .main-card { box-shadow: none; margin: 0; }
+            .actions, .form-section, .treeview, .main-card { display: none !important; }
             body { background: #fff; }
+            table { page-break-inside: auto; }
         }
     </style>
+    <script>
+        function updateDescriptionDropdown() {
+            const categorySelect = document.getElementById('category');
+            const descriptionSelect = document.getElementById('description');
+            const selectedCategory = categorySelect.value;
+            descriptionSelect.innerHTML = '<option value="">--Select Description--</option>';
+            if (selectedCategory) {
+                fetch('/get_items_by_category', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: 'category=' + encodeURIComponent(selectedCategory)
+                })
+                .then(response => response.json())
+                .then(data => {
+                    data.items.forEach(item => {
+                        const option = document.createElement('option');
+                        option.value = item;
+                        option.text = item;
+                        descriptionSelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error:', error));
+            }
+        }
+        function selectTreeItem(cat, item) {
+            document.getElementById('category').value = cat;
+            updateDescriptionDropdown();
+            setTimeout(function() {
+                document.getElementById('description').value = item;
+                document.querySelector('.form-section form').submit();
+            }, 100);
+        }
+    </script>
 </head>
 <body>
 <div class="main-card">
-    <div class="header-row">
-        <h2>Print Ledger Page</h2>
+    <div class="header">
+        <p>Ph: 080-22001521 | Email: email@example.com</p>
+        <p>Office of the DIG/CASO, CISF Unit ASG Bangalore</p>
+        <p>ISO 9001:2015 Certified</p>
+        <div class="title">LEDGER REPORT</div>
     </div>
-    <form method="get">
-        <div class="form-row">
+    <div class="form-section">
+        <form method="GET" action="{{ url_for('print_ledger') }}">
             <label for="category">Items Category:</label>
-            <select name="category" id="category" required>
+            <select name="category" id="category" onchange="updateDescriptionDropdown()">
                 <option value="">--Select Category--</option>
                 {% for cat in categories %}
-                    <option value="{{ cat }}" {% if cat == selected_category %}selected{% endif %}>{{ cat }}</option>
+                    <option value="{{ cat }}" {% if cat == request.args.get('category', '') %}selected{% endif %}>{{ cat }}</option>
                 {% endfor %}
             </select>
             <label for="description">Description:</label>
-            <select name="description" id="description" required>
+            <select name="item" id="description">
                 <option value="">--Select Description--</option>
-                {% for desc in descriptions %}
-                    <option value="{{ desc }}" {% if desc == selected_description %}selected{% endif %}>{{ desc }}</option>
-                {% endfor %}
+                {% if selected_item %}
+                    {% for item in items %}
+                        <option value="{{ item }}" {% if selected_item == item %}selected{% endif %}>{{ item }}</option>
+                    {% endfor %}
+                {% endif %}
             </select>
             <button type="submit"><i class="fa fa-search"></i> Show Ledger</button>
+        </form>
+    </div>
+    <div class="flex-container">
+        <div class="treeview">
+            <h3><i class="fa fa-sitemap"></i> Ledger Treeview</h3>
+            <ul>
+                {% for cat in categories %}
+                    <li>
+                        <span style="color:#1765ad;font-weight:600;">{{ cat }}</span>
+                        <ul>
+                            {% for item in items_by_category[cat] %}
+                                <li>
+                                    <span class="tree-item{% if selected_item == item %} selected{% endif %}"
+                                          onclick="selectTreeItem('{{ cat }}','{{ item }}')">
+                                        <i class="fa fa-cube"></i> {{ item }}
+                                    </span>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
         </div>
-    </form>
-    <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const categorySelect = document.getElementById('category');
-        const descriptionSelect = document.getElementById('description');
-        categorySelect.addEventListener('change', function() {
-            const cat = this.value;
-            descriptionSelect.innerHTML = '<option value="">Loading...</option>';
-            fetch('/get_descriptions?category=' + encodeURIComponent(cat))
-                .then(resp => resp.json())
-                .then(data => {
-                    let options = '<option value="">--Select Description--</option>';
-                    for (const desc of data) {
-                        options += `<option value="${desc}">${desc}</option>`;
-                    }
-                    descriptionSelect.innerHTML = options;
-                });
-        });
-    });
-    </script>
-    {% if selected_category and selected_description %}
-    <div class="info-bar">
-        <div><span>Category:</span> {{ selected_category }}</div>
-        <div><span>Description:</span> {{ selected_description }}</div>
-        {% if item_info %}
-            <div><span>Head:</span> {{ item_info['head'] }}</div>
-            <div><span>Ledger Page No:</span> {{ item_info['ledger_page_no'] }}</div>
+        {% if selected_item %}
+        <div class="details">
+            <p><strong>Category:</strong>
+                {% for cat in categories %}
+                    {% if selected_item in items_by_category[cat] %}
+                        {{ cat }}
+                    {% endif %}
+                {% endfor %}
+            </p>
+            <p><strong>Description:</strong> {{ selected_item }}</p>
+            {% if item_info %}
+                <p><strong>Head:</strong> {{ item_info['head'] or '-' }}</p>
+                <p><strong>Ledger Page No:</strong> {{ item_info['ledger_page_no'] or '-' }}</p>
+            {% else %}
+                <p>No item information available.</p>
+            {% endif %}
+        </div>
         {% endif %}
     </div>
-    <table class="ledger-table">
-        <thead>
-            <tr>
-                <th>S.No</th>
-                <th>Date</th>
-                <th>Type</th>
-                <th>Receive From</th>
-                <th>Issue To</th>
-                <th>Prev Bal</th>
-                <th>Receive Qty</th>
-                <th>Issue Qty</th>
-                <th>Balance</th>
-                <th>Remark</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for row in ledger_data %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ row['date'] }}</td>
-                <td>{{ row['type'] }}</td>
-                <td>{{ row['receive_from'] or '-' }}</td>
-                <td>{{ row['issue_to'] or '-' }}</td>
-                <td>{{ row['prev_bal'] }}</td>
-                <td>{{ row['receive_qty'] }}</td>
-                <td>{{ row['issue_qty'] }}</td>
-                <td>{{ row['balance'] }}</td>
-                <td>{{ row['remark'] or '' }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <div class="actions">
-        <button type="button" class="pdf" onclick="window.location='{{ url_for('export_ledger_pdf', item=selected_item) }}'"><i class="fa fa-file-pdf"></i> Export PDF</button>
-        <button type="button" class="excel" onclick="window.location='{{ url_for('export_ledger_excel', item=selected_item) }}'"><i class="fa fa-file-excel"></i> Export Excel</button>
-        <button type="button" class="print" onclick="window.print()"><i class="fa fa-print"></i> Print</button>
-        <button type="button" class="back" onclick="window.location='{{ url_for('dashboard') }}'"><i class="fa fa-arrow-left"></i> Back</button>
-    </div>
+    {% if selected_item %}
+        <div class="transaction-table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Category</th>
+                        <th>Particulars</th>
+                        <th>Head</th>
+                        <th>L/P No.</th>
+                        <th>Previous</th>
+                        <th>Received</th>
+                        <th>Issue</th>
+                        <th>Office</th>
+                        <th>Remark</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set sn = 1 %}
+                    {% for t in transactions if t.item == selected_item %}
+                        <tr>
+                            <td>{{ sn }}</td>
+                            <td>{{ t.date if t.date else '--' }}</td>
+                            <td>{{ t.type if t.type else '--' }}</td>
+                            <td>{{ t.category if t.category else '--' }}</td>
+                            <td>{{ t.description if t.description else '--' }}</td>
+                            <td>{{ t.head if t.head else '--' }}</td>
+                            <td>{{ t.lp_no if t.lp_no else '--' }}</td>
+                            <td>{{ t.previous if t.previous else '--' }}</td>
+                            <td>{{ t.received if t.received else '--' }}</td>
+                            <td>{{ t.issued if t.issued else '--' }}</td>
+                            <td>{{ t.office if t.office else '--' }}</td>
+                            <td>{{ t.remark if t.remark else '--' }}</td>
+                        </tr>
+                        {% set sn = sn + 1 %}
+                    {% endfor %}
+                    {% if sn == 1 %}
+                        <tr>
+                            <td colspan="12" class="no-data">No transaction entries found for the selected item.</td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+        <div class="actions">
+            <a href="{{ url_for('export_ledger_excel', item=selected_item) }}"><i class="fa fa-file-excel"></i> Export Excel</a>
+            <button type="button" class="print" onclick="window.print()"><i class="fa fa-print"></i> Print</button>
+            <a href="{{ url_for('dashboard') }}" class="back"><i class="fa fa-arrow-left"></i> Back</a>
+        </div>
+        <div class="signature">
+            <p>Signature:</p>
+            <p>___________________________</p>
+            <p>Quarter Master</p>
+            <p>CISF UNIT ASG BANGALORE</p>
+        </div>
     {% endif %}
 </div>
 </body>

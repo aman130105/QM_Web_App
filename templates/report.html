@@ -5,52 +5,95 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
     <style>
         body { background: #dbeafe; font-family: Arial, sans-serif; }
-        .report-container { background: #fff; margin: 20px auto; padding: 10px 0 20px 0; border-radius: 10px; width: 97%; }
-        .report-title { text-align: center; font-size: 2rem; font-weight: bold; margin: 10px 0 20px 0; }
-        .filters { display: flex; gap: 10px; align-items: center; justify-content: center; margin-bottom: 10px; }
-        .filters select, .filters input[type="date"], .filters input[type="text"] { padding: 4px 8px; font-size: 1rem; border-radius: 4px; border: 1px solid #bbb; }
-        .filters button, .filters input[type="button"] { padding: 7px 30px; font-size: 1.1rem; border-radius: 6px; border: none; margin-left: 10px; }
-        .filters .search-btn { background: #22c55e; color: #fff; font-weight: bold; }
-        .filters .clear-btn { background: #a78bfa; color: #fff; font-weight: bold; }
+        .report-container { background: #fff; margin: 20px auto; padding: 10px 0 20px 0; border-radius: 12px; width: 97%; box-shadow: 0 4px 24px #0002; }
+        .report-title { text-align: center; font-size: 2rem; font-weight: bold; margin: 10px 0 20px 0; color: #2d3a4a; }
+        .filters {
+            display: flex; gap: 14px; align-items: flex-end; justify-content: center; margin-bottom: 16px;
+            flex-wrap: wrap; background: #f1f5fa; border-radius: 8px; padding: 14px 0;
+        }
+        .filters label {
+            font-weight: 500; color: #374151; margin-right: 4px; font-size: 1.04rem;
+        }
+        .filters select, .filters input[type="date"], .filters input[type="text"] {
+            padding: 6px 10px; font-size: 1rem; border-radius: 5px; border: 1px solid #bbb; min-width: 120px;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .filters select:focus, .filters input[type="date"]:focus {
+            border: 1.5px solid #2563eb; box-shadow: 0 0 0 2px #93c5fd55;
+            outline: none;
+        }
+        .filters button, .filters input[type="button"] {
+            padding: 8px 28px; font-size: 1.08rem; border-radius: 6px; border: none; margin-left: 8px;
+            font-weight: bold; transition: background 0.2s, color 0.2s;
+        }
+        .filters .search-btn { background: #22c55e; color: #fff; }
+        .filters .search-btn:hover { background: #15803d; }
+        .filters .clear-btn { background: #a78bfa; color: #fff; }
+        .filters .clear-btn:hover { background: #7c3aed; }
+        .spinner {
+            display: none; margin-left: 10px; vertical-align: middle;
+        }
         table { width: 98%; margin: 0 auto; border-collapse: collapse; background: #fff; }
         th, td { border: 1px solid #bbb; padding: 7px 8px; font-size: 1.08rem; }
         th { background: #f5f5f5; color: #222; font-weight: bold; }
+        tr:nth-child(even) { background: #f3f6fb; }
+        tr:hover { background: #e0e7ef; }
         .totals-row { background: #111; color: #ffe600; font-size: 1.3rem; font-weight: bold; text-align: center; }
         .actions { display: flex; justify-content: center; gap: 30px; margin: 18px 0 0 0; }
-        .actions button, .actions input[type="button"] { font-size: 1.1rem; padding: 10px 30px; border-radius: 7px; border: none; font-weight: bold; }
+        .actions button, .actions input[type="button"] {
+            font-size: 1.1rem; padding: 10px 30px; border-radius: 7px; border: none; font-weight: bold;
+            transition: background 0.2s, color 0.2s;
+        }
         .actions .excel { background: #2563eb; color: #fff; }
+        .actions .excel:hover { background: #1d4ed8; }
         .actions .pdf { background: #facc15; color: #222; }
         .actions .back { background: #ef4444; color: #fff; }
+        .actions .back:hover { background: #b91c1c; }
         .table-scroll { max-height: 400px; overflow-y: auto; margin-bottom: 0; }
-        @media (max-width: 900px) {
+        @media (max-width: 1100px) {
             .report-container { width: 100%; }
-            table, th, td { font-size: 0.95rem; }
+            table, th, td { font-size: 0.97rem; }
+        }
+        @media (max-width: 700px) {
+            .filters { flex-direction: column; align-items: stretch; gap: 10px; }
+            .actions { flex-direction: column; gap: 10px; }
         }
     </style>
 </head>
 <body>
 <div class="report-container">
     <div class="report-title">Complete Transaction Report</div>
-    <form method="get" class="filters">
-        <select name="category">
+    <form method="GET" action="{{ url_for('report') }}" class="filters" id="report-filter-form" onsubmit="showSpinner()">
+        <label for="category-select">Category:</label>
+        <select name="category" id="category-select" onchange="updateItemDropdown()">
             <option value="">All</option>
             {% for cat in categories %}
                 <option value="{{cat}}" {% if request.args.get('category')==cat %}selected{% endif %}>{{cat}}</option>
             {% endfor %}
         </select>
-        <select name="item">
+        <label for="item-select">Name:</label>
+        <select name="item" id="item-select">
             <option value="">All</option>
-            {% for item in items %}
-                <option value="{{item}}" {% if request.args.get('item')==item %}selected{% endif %}>{{item}}</option>
-            {% endfor %}
+            {% set selected_category = request.args.get('category', '') %}
+            {% if selected_category %}
+                {% for item in items_by_category[selected_category] %}
+                    <option value="{{item}}" {% if request.args.get('item')==item %}selected{% endif %}>{{item}}</option>
+                {% endfor %}
+            {% else %}
+                {% for item in items %}
+                    <option value="{{item}}" {% if request.args.get('item')==item %}selected{% endif %}>{{item}}</option>
+                {% endfor %}
+            {% endif %}
         </select>
-        <select name="head">
+        <label for="head">Head:</label>
+        <select name="head" id="head">
             <option value="">All</option>
             {% for head in heads %}
                 <option value="{{head}}" {% if request.args.get('head')==head %}selected{% endif %}>{{head}}</option>
             {% endfor %}
         </select>
-        <select name="office">
+        <label for="office">Office:</label>
+        <select name="office" id="office">
             <option value="">All</option>
             {% for office in offices %}
                 {% if office is string %}
@@ -60,10 +103,13 @@
                 {% endif %}
             {% endfor %}
         </select>
-        <input type="date" name="from_date" value="{{ request.args.get('from_date', '') or '2000-01-01' }}">
-        <input type="date" name="to_date" value="{{ request.args.get('to_date', '') or now().strftime('%Y-%m-%d') }}">
+        <label for="from_date">From:</label>
+        <input type="date" name="from_date" id="from_date" value="{{ request.args.get('from_date', '') or '2000-01-01' }}">
+        <label for="to_date">To:</label>
+        <input type="date" name="to_date" id="to_date" value="{{ request.args.get('to_date', '') or now().strftime('%Y-%m-%d') }}">
         <button type="submit" class="search-btn"><i class="fa fa-search"></i> Search</button>
         <input type="button" class="clear-btn" value="Clear" onclick="window.location='{{ url_for('report') }}'">
+        <span class="spinner" id="spinner"><i class="fa fa-spinner fa-spin"></i> Loading...</span>
     </form>
     <div class="table-scroll">
     <table>
@@ -71,8 +117,8 @@
             <tr>
                 <th>Date</th>
                 <th>Type</th>
-                <th>Item</th>
-                <th>Description</th>
+                <th>Category</th>
+                <th>Name</th>
                 <th>Head</th>
                 <th>L/P No.</th>
                 <th>Previous</th>
@@ -84,16 +130,16 @@
         <tbody>
             {% for t in transactions %}
             <tr>
-                <td>{{ t.date }}</td>
-                <td>{{ t.type }}</td>
-                <td>{{ t.item }}</td>
-                <td>{{ t.description }}</td>
-                <td>{{ t.head }}</td>
-                <td>{{ t.lp_no }}</td>
-                <td>{{ t.previous }}</td>
-                <td>{{ t.received }}</td>
-                <td>{{ t.issued }}</td>
-                <td>{{ t.office }}</td>
+                <td>{{ t.date if t.date else '--' }}</td>
+                <td>{{ t.type if t.type else '--' }}</td>
+                <td>{{ t.category if t.category else '--' }}</td>
+                <td>{{ t.item if t.item else '--' }}</td>
+                <td>{{ t.head if t.head else '--' }}</td>
+                <td>{{ t.lp_no if t.lp_no else '--' }}</td>
+                <td>{{ t.previous if t.previous else '--' }}</td>
+                <td>{{ t.received if t.received else '--' }}</td>
+                <td>{{ t.issued if t.issued else '--' }}</td>
+                <td>{{ t.office if t.office else '--' }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -116,5 +162,41 @@
         </button>
     </div>
 </div>
+<script>
+    // Items by category mapping from backend
+    const itemsByCategory = {
+        {% for cat in categories %}
+            "{{ cat|e }}": [
+                {% for item in items_by_category[cat] %}
+                    "{{ item|e }}"{% if not loop.last %},{% endif %}
+                {% endfor %}
+            ]{% if not loop.last %},{% endif %}
+        {% endfor %}
+    };
+
+    function updateItemDropdown() {
+        var category = document.getElementById('category-select').value;
+        var itemSelect = document.getElementById('item-select');
+        var selectedItem = "{{ request.args.get('item', '') }}";
+        itemSelect.innerHTML = '<option value="">All</option>';
+        if (category && itemsByCategory[category]) {
+            itemsByCategory[category].forEach(function(item) {
+                var selected = (item === selectedItem) ? 'selected' : '';
+                itemSelect.innerHTML += '<option value="' + item + '" ' + selected + '>' + item + '</option>';
+            });
+        } else {
+            {% for item in items %}
+                var selected = ("{{ item }}" === selectedItem) ? 'selected' : '';
+                itemSelect.innerHTML += '<option value="{{ item }}" ' + selected + '>{{ item }}</option>';
+            {% endfor %}
+        }
+    }
+    function showSpinner() {
+        document.getElementById('spinner').style.display = 'inline-block';
+    }
+    window.onload = function() {
+        updateItemDropdown();
+    };
+</script>
 </body>
 </html>

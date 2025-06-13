@@ -5,16 +5,17 @@ from datetime import datetime
 import io
 from flask import send_file
 import openpyxl
+from psycopg2.extras import RealDictCursor
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # इसे strong key से बदलें
+app.secret_key = 'your_secret_key'  # Replace with a strong key
 
 # DB connection settings for PostgreSQL
 DB_CONFIG = {
     'host': 'localhost',
-    'dbname': 'postgres',  # <-- Use your actual database name, e.g. 'postgres' or 'mydb'
-    'user': 'postgres',    # <-- Use your actual PostgreSQL username
-    'password': '12Marks@255'  # <-- Your actual password
+    'dbname': 'postgres',  # Use your actual database name
+    'user': 'postgres',    # Use your actual PostgreSQL username
+    'password': '12Marks@255'  # Your actual password
 }
 
 # Database helper
@@ -41,19 +42,16 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
         user = cur.fetchone()
         conn.close()
-
         if user:
             session['user'] = username
             return redirect(url_for('dashboard'))
         else:
             error = 'Invalid Username or Password'
-
     return render_template('login.html', error=error)
 
 # Registration Page
@@ -63,7 +61,6 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        # Check if user already exists
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM users WHERE username=%s", (username,))
@@ -84,7 +81,6 @@ def register():
 def dashboard():
     if 'user' not in session:
         return redirect(url_for('login'))
-    # Pass url_for('report') to template for the report button/link
     return render_template('dashboard.html', username=session['user'])
 
 # Logout
@@ -97,10 +93,8 @@ def logout():
 def receive():
     if 'user' not in session:
         return redirect(url_for('login'))
-
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
     if request.method == 'POST':
         category = request.form['category']
         item_name = request.form['item_name']
@@ -111,7 +105,6 @@ def receive():
         price_unit = request.form['price_unit']
         remarks = request.form['remarks']
         date = request.form['date']
-
         cur.execute("""INSERT INTO received_items 
             (category, item_name, head, ledger_page_no, available_stock, qty, price_unit, remarks, date)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
@@ -119,12 +112,9 @@ def receive():
         conn.commit()
         conn.close()
         return redirect(url_for('receive'))
-
-    # Entries for table
     cur.execute("SELECT * FROM received_items ORDER BY id DESC")
     entries = cur.fetchall()
-    entries = [dict(row) for row in entries]  # <-- Fix for JSON serialization
-
+    entries = [dict(row) for row in entries]
     categories = Ledger.get_categories()
     items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
     conn.close()
@@ -140,10 +130,8 @@ def issue():
     error = None
     message = None
     form_data = {}
-
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
     if request.method == 'POST':
         category = request.form['category']
         item_name = request.form['item_name']
@@ -154,33 +142,25 @@ def issue():
         issued_to = request.form['issued_to']
         date = request.form['date']
         remarks = request.form['remarks']
-
-        # Calculate available stock for this item
         cur.execute("SELECT SUM(qty) as total_received FROM received_items WHERE category=%s AND item_name=%s", (category, item_name))
         received = cur.fetchone()['total_received'] or 0
         cur.execute("SELECT SUM(qty) as total_issued FROM issued_items WHERE category=%s AND item_name=%s", (category, item_name))
         issued = cur.fetchone()['total_issued'] or 0
         available = received - issued
-
         if qty > available:
             error = f"Issue quantity ({qty}) cannot be greater than available stock ({available})."
-            # Keep form data so user doesn't have to re-enter
             form_data = request.form.to_dict()
         else:
-            # Save entry
-            cur.execute("""
+            cur.execute(""" 
                 INSERT INTO issued_items (category, item_name, head, ledger_page_no, available_stock, qty, issued_to, date, remarks)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (category, item_name, head, ledger_page_no, available_stock, qty, issued_to, date, remarks))
             conn.commit()
             message = "Entry added successfully."
-            form_data = {}  # Clear form
-
-    # Fetch all issued items for table
+            form_data = {}
     cur.execute("SELECT * FROM issued_items ORDER BY id DESC")
     entries = cur.fetchall()
     entries = [dict(row) for row in entries]
-
     categories = Ledger.get_categories()
     items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
     offices = HeadOfficeManager.get_all_offices()
@@ -253,35 +233,57 @@ def ledger():
     if 'user' not in session:
         return redirect(url_for('login'))
     message = None
+    error = None
     if request.method == 'POST':
         category = request.form['category']
         item_name = request.form['item_name']
         head = request.form['head']
         ledger_page_no = request.form['ledger_page_no']
         opening_date = request.form['opening_date']
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            "SELECT id FROM ledger WHERE category=%s AND item_name=%s AND head=%s",
+            (category, item_name, head)
+        )
+        duplicate = cur.fetchone()
+        if duplicate:
+            error = "A ledger entry with the same Category, Description, and Head already exists."
+            cur.execute("SELECT category_name FROM items_category ORDER BY category_name")
+            categories = [row['category_name'] for row in cur.fetchall()]
+            cur.execute("SELECT head FROM head_office WHERE head IS NOT NULL AND head != '' ORDER BY head")
+            heads = [row['head'] for row in cur.fetchall()]
+            items = Ledger.get_all()
+            conn.close()
+            return render_template(
+                'ledger.html',
+                items=items,
+                categories=categories,
+                heads=heads,
+                message=message,
+                error=error,
+                now=datetime.now
+            )
         Ledger.add(category, item_name, head, ledger_page_no, opening_date)
         message = "Ledger entry added successfully."
+        conn.close()
     items = Ledger.get_all()
-
-    # Fetch categories from items_category table
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT category_name FROM items_category ORDER BY category_name")
     categories = [row['category_name'] for row in cur.fetchall()]
-    # Fetch heads from head_office table
     cur.execute("SELECT head FROM head_office WHERE head IS NOT NULL AND head != '' ORDER BY head")
     heads = [row['head'] for row in cur.fetchall()]
     conn.close()
-
     return render_template(
         'ledger.html',
         items=items,
         categories=categories,
         heads=heads,
         message=message,
+        error=error,
         now=datetime.now
     )
-# ...existing code...
 
 class Ledger:
     @staticmethod
@@ -446,7 +448,6 @@ def update_ledger(id):
         return redirect(url_for('ledger'))
     cur.execute("SELECT * FROM ledger WHERE id=%s", (id,))
     item = cur.fetchone()
-    # Fetch categories and heads for dropdowns
     cur.execute("SELECT category_name FROM items_category ORDER BY category_name")
     categories = [row['category_name'] for row in cur.fetchall()]
     cur.execute("SELECT head FROM head_office WHERE head IS NOT NULL AND head != '' ORDER BY head")
@@ -468,7 +469,6 @@ def update_receive(id):
     conn = get_db_connection()
     cur = conn.cursor()
     if request.method == 'POST':
-        # Update fields as per your receive table
         category = request.form['category']
         item_name = request.form['item_name']
         head = request.form['head']
@@ -537,10 +537,8 @@ def get_ledger_info():
     item_name = request.form['item_name']
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    # Ledger info fetch
     cur.execute("SELECT head, ledger_page_no FROM ledger WHERE category=%s AND item_name=%s", (category, item_name))
     row = cur.fetchone()
-    # Available stock calculation
     cur.execute("SELECT SUM(qty) as total_received FROM received_items WHERE category=%s AND item_name=%s", (category, item_name))
     received = cur.fetchone()['total_received'] or 0
     cur.execute("SELECT SUM(qty) as total_issued FROM issued_items WHERE category=%s AND item_name=%s", (category, item_name))
@@ -560,18 +558,14 @@ def get_ledger_info():
 def manage_head_office():
     if 'user' not in session:
         return redirect(url_for('login'))
-
     message = None
     head_form_value = ''
     office_form_value = ''
     head_id = ''
     office_id = ''
-
     if request.method == 'POST':
         form_type = request.form.get('form_type')
         action = request.form.get('action')
-
-        # HEAD CRUD
         if form_type == 'head':
             head = request.form.get('head', '').strip()
             head_id = request.form.get('head_id', '')
@@ -585,8 +579,6 @@ def manage_head_office():
                 HeadOfficeManager.delete(head_id)
                 message = "Head deleted successfully."
             head_form_value = head
-
-        # OFFICE CRUD
         elif form_type == 'office':
             office_name = request.form.get('office_name', '').strip()
             office_id = request.form.get('office_id', '')
@@ -600,24 +592,18 @@ def manage_head_office():
                 HeadOfficeManager.delete(office_id)
                 message = "Office deleted successfully."
             office_form_value = office_name
-
-        # SELECT HEAD FOR UPDATE/DELETE
         elif form_type == 'head_select':
             head_id = request.form.get('head_id')
             head_row = HeadOfficeManager.get_by_id(head_id)
             if head_row:
                 head_form_value = head_row['head']
                 head_id = head_row['id']
-
-        # SELECT OFFICE FOR UPDATE/DELETE
         elif form_type == 'office_select':
             office_id = request.form.get('office_id')
             office_row = HeadOfficeManager.get_by_id(office_id)
             if office_row:
                 office_form_value = office_row['office_name']
                 office_id = office_row['id']
-
-    # Fetch all heads and offices
     heads = HeadOfficeManager.get_all_heads()
     offices = HeadOfficeManager.get_all_offices()
     return render_template(
@@ -658,19 +644,14 @@ def delete_head_office(id):
 def report():
     if 'user' not in session:
         return redirect(url_for('login'))
-
-    # Filters from request
     category = request.args.get('category', '')
     item = request.args.get('item', '')
     head = request.args.get('head', '')
     office = request.args.get('office', '')
     from_date = request.args.get('from_date', '2000-01-01')
     to_date = request.args.get('to_date', datetime.now().strftime('%Y-%m-%d'))
-
     conn = get_db_connection()
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-
-    # Prepare WHERE clause
     where = []
     params = []
     if category:
@@ -687,26 +668,21 @@ def report():
         params.append(office)
     where.append("date BETWEEN %s AND %s")
     params.extend([from_date, to_date])
-
     where_clause = " AND ".join(where) if where else "1=1"
-
-    # Fix: Use NULL for integer columns in UNION, not empty string
     query = f"""
-        SELECT date, 'Receive' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+        SELECT date, category, 'Receive' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
                NULL as previous, qty as received, NULL as issued, NULL as office
         FROM received_items
         WHERE {where_clause}
         UNION ALL
-        SELECT date, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+        SELECT date, category, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
                NULL as previous, NULL as received, qty as issued, issued_to as office
         FROM issued_items
         WHERE {where_clause}
         ORDER BY date DESC
     """
-    cur.execute(query, params * 2)  # params for both SELECTs
+    cur.execute(query, params * 2)
     transactions = [dict(row) for row in cur.fetchall()]
-
-    # For filters
     cur.execute("SELECT DISTINCT category FROM ledger")
     categories = [row['category'] for row in cur.fetchall()]
     cur.execute("SELECT DISTINCT item_name FROM ledger")
@@ -715,21 +691,19 @@ def report():
     heads = [row['head'] for row in cur.fetchall()]
     cur.execute("SELECT DISTINCT issued_to FROM issued_items")
     offices = [row['issued_to'] for row in cur.fetchall()]
-
-    # Totals
+    items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
     cur.execute("SELECT SUM(qty) FROM received_items")
     total_received = cur.fetchone()['sum'] or 0 if cur.rowcount else 0
     cur.execute("SELECT SUM(qty) FROM issued_items")
     total_issued = cur.fetchone()['sum'] or 0 if cur.rowcount else 0
     total_balance = total_received - total_issued
-
     conn.close()
-
     return render_template(
         'report.html',
         transactions=transactions,
         categories=categories,
         items=items,
+        items_by_category=items_by_category,
         heads=heads,
         offices=offices,
         total_received=total_received,
@@ -802,23 +776,18 @@ class HeadOfficeManager:
         conn.close()
         return dict(row) if row else None
 
-# Yeh function app.run se pehle ek baar call kar dein:
 @app.route('/export_excel')
 def export_excel():
     if 'user' not in session:
         return redirect(url_for('login'))
-
-    # Same filters as report
     category = request.args.get('category', '')
     item = request.args.get('item', '')
     head = request.args.get('head', '')
     office = request.args.get('office', '')
     from_date = request.args.get('from_date', '2000-01-01')
     to_date = request.args.get('to_date', datetime.now().strftime('%Y-%m-%d'))
-
     conn = get_db_connection()
     cur = conn.cursor()
-
     where = []
     params = []
     if category:
@@ -836,14 +805,13 @@ def export_excel():
     where.append("date BETWEEN %s AND %s")
     params.extend([from_date, to_date])
     where_clause = " AND ".join(where) if where else "1=1"
-
     query = f"""
-        SELECT date, 'Receive' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+        SELECT date, 'Receive' as type, category, item_name as name, head, ledger_page_no as lp_no,
                NULL as previous, qty as received, NULL as issued, NULL as office
         FROM received_items
         WHERE {where_clause}
         UNION ALL
-        SELECT date, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+        SELECT date, 'Issue' as type, category, item_name as name, head, ledger_page_no as lp_no,
                NULL as previous, NULL as received, qty as issued, issued_to as office
         FROM issued_items
         WHERE {where_clause}
@@ -852,24 +820,22 @@ def export_excel():
     cur.execute(query, params * 2)
     rows = cur.fetchall()
     conn.close()
-
-    # Create Excel workbook
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Transaction Report"
-    headers = ["Date", "Type", "Item", "Description", "Head", "L/P No.", "Previous", "Received", "Issue", "Office"]
+    headers = ["Date", "Type", "Category", "Name", "Head", "L/P No.", "Previous", "Received", "Issue", "Office"]
     ws.append(headers)
     for row in rows:
         ws.append([
-            row["date"], row["type"], row["item"], row["description"], row["head"], row["lp_no"],
-            row["previous"], row["received"], row["issued"], row["office"]
+            row[0], row[1], row[2], row[3], row[4], row[5],
+            row[6] if row[6] is not None else '',
+            row[7] if row[7] is not None else '',
+            row[8] if row[8] is not None else '',
+            row[9] if row[9] is not None else ''
         ])
-
-    # Save to BytesIO
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
-
     return send_file(
         output,
         as_attachment=True,
@@ -884,15 +850,11 @@ def export_ledger_excel():
     item = request.args.get('item', '')
     if not item:
         return "No item selected", 400
-
     conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY date", (item,))
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
     rows = cur.fetchall()
     conn.close()
-
-    import openpyxl
-    import io
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Ledger"
@@ -900,13 +862,12 @@ def export_ledger_excel():
     ws.append(headers)
     for idx, row in enumerate(rows, 1):
         ws.append([
-            idx, row['date'], row['type'], row['receive_from'], row['issue_to'],
-            row['prev_bal'], row['receive_qty'], row['issue_qty'], row['balance'], row['remark']
+            idx, row['date'], row['type'], row['receive_from'] or '-', row['issue_to'] or '-',
+            row['prev_bal'] or 0, row['receive_qty'] or 0, row['issue_qty'] or 0, row['balance'] or 0, row['remark'] or '-'
         ])
     output = io.BytesIO()
     wb.save(output)
     output.seek(0)
-    from flask import send_file
     return send_file(
         output,
         as_attachment=True,
@@ -926,31 +887,42 @@ def get_all_items():
     conn.close()
     return items
 
+@app.route('/get_items_by_category', methods=['POST'])
+def get_items_by_category():
+    category = request.form['category']
+    items = Ledger.get_items_by_category(category)
+    return jsonify({'items': items})
+
 @app.route('/print_ledger', methods=['GET', 'POST'])
 def print_ledger():
-    selected_item = request.args.get('item')
-    items = get_all_items()  # function jo item list deta hai
-
-    ledger_data = []
-    item_info = None
-
-    if selected_item:
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    try:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY date", (selected_item,))
-        ledger_data = [dict(row) for row in cur.fetchall()]
-        # item_info fetch karne ka code bhi yahan hona chahiye
-        cur.execute("SELECT * FROM items WHERE item_name = %s", (selected_item,))
-        item_info = cur.fetchone()
+        categories = Ledger.get_categories()
+        items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
+        items = get_all_items()
+        selected_item = request.args.get('item')
+        ledger_data = []
+        item_info = None
+        if selected_item:
+            cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (selected_item,))
+            ledger_data = [dict(row) for row in cur.fetchall()]
+            cur.execute("SELECT * FROM ledger WHERE item_name = %s", (selected_item,))
+            item_info = cur.fetchone()
         conn.close()
-
-    return render_template(
-        'print_ledger.html',
-        items=items,
-        selected_item=selected_item,
-        ledger_data=ledger_data,
-        item_info=item_info
-    )
+        return render_template(
+            'print_ledger.html',
+            categories=categories,
+            items_by_category=items_by_category,
+            items=items,
+            selected_item=selected_item,
+            ledger_data=ledger_data,
+            item_info=item_info
+        )
+    except Exception as e:
+        return f"An error occurred: {str(e)}", 500
 
 @app.route('/export_ledger_pdf')
 def export_ledger_pdf():
@@ -959,22 +931,15 @@ def export_ledger_pdf():
     item = request.args.get('item', '')
     if not item:
         return "No item selected", 400
-
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM ledger WHERE item_name = %s", (item,))
     item_info = cur.fetchone()
-    cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY date", (item,))
+    cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
     rows = cur.fetchall()
     conn.close()
-
-    # Render HTML for PDF (Image1 layout)
-    from flask import render_template
     html = render_template('ledger_pdf_template.html', item_info=item_info, rows=rows)
-
-    # Use pdfkit/weasyprint to generate PDF from HTML
     import pdfkit
-    import io
     pdf = pdfkit.from_string(html, False)
     return send_file(
         io.BytesIO(pdf),
@@ -988,19 +953,15 @@ def items_category():
     if 'user' not in session:
         return redirect(url_for('login'))
     conn = get_db_connection()
-    # Use RealDictCursor for dict-like rows
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     message = ""
     if request.method == 'POST':
-        category_name = request.form['category_name'].strip()
-        if category_name:
-            cur.execute("INSERT INTO items_category (category_name) VALUES (%s)", (category_name,))
-            conn.commit()
-            message = "Category added successfully."
-        else:
-            message = "Category name cannot be empty."
+        category_name = request.form['category_name']
+        cur.execute("INSERT INTO items_category (category_name) VALUES (%s)", (category_name,))
+        conn.commit()
+        message = "Category added successfully."
     cur.execute("SELECT * FROM items_category ORDER BY id DESC")
-    categories = [dict(row) for row in cur.fetchall()]
+    categories = cur.fetchall()
     conn.close()
     return render_template('items_category.html', categories=categories, message=message)
 
@@ -1009,7 +970,7 @@ def update_category(id):
     if 'user' not in session:
         return redirect(url_for('login'))
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
     if request.method == 'POST':
         category_name = request.form['category_name'].strip()
         if category_name:
@@ -1033,15 +994,13 @@ def delete_category(id):
     conn.close()
     return redirect(url_for('items_category'))
 
-# ---- THIS BLOCK MUST BE LAST ----
 if __name__ == '__main__':
     create_ledger_table()
     create_received_items_table()
-    create_items_category_table()  # <-- yeh line add karein
+    create_items_category_table()
     create_head_office_table()
     create_ledger_entries_table()
     app.run(debug=True)
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0', port=10000)
-

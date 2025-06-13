@@ -7,25 +7,62 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body {
-            background: linear-gradient(135deg, #e0eafc, #cfdef3 100%);
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
             min-height: 100vh;
         }
         .dashboard-card {
             border-radius: 18px;
             box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            background: #fff;
+            border: none;
         }
         .dashboard-card:hover {
-            transform: translateY(-5px) scale(1.03);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+            transform: translateY(-7px) scale(1.035);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.13);
         }
         .dashboard-icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 2.7rem;
+            margin-bottom: 12px;
         }
         .navbar-brand {
             font-weight: bold;
             letter-spacing: 1px;
+            font-size: 1.35rem;
+        }
+        .dashboard-title {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #2d3a4a;
+            margin-bottom: 36px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        .dashboard-card h5 {
+            font-size: 1.18rem;
+            font-weight: 600;
+            color: #2d3a4a;
+        }
+        .dashboard-card p {
+            font-size: 0.98rem;
+            color: #6c757d;
+        }
+        .dashboard-row {
+            row-gap: 32px;
+        }
+        @media (max-width: 991px) {
+            .dashboard-row {
+                row-gap: 24px;
+            }
+        }
+        @media (max-width: 767px) {
+            .dashboard-title {
+                font-size: 1.4rem;
+                margin-bottom: 18px;
+            }
+            .dashboard-card {
+                padding: 1.2rem 0.7rem !important;
+            }
         }
     </style>
 </head>
@@ -41,95 +78,89 @@
 </nav>
 
 <div class="container mt-5">
-    <div class="row justify-content-center g-4">
+    <div class="dashboard-title">Welcome to Quarter Master, CISF ASG Bangalore </div>
+    <div class="dashboard-subtitle">Quick Menu</div>
+    <div class="row dashboard-row justify-content-center">
         <!-- Create Ledger -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('ledger') }}" class="text-decoration-none">
                 <div class="card dashboard-card text-center p-4 h-100">
                     <div class="dashboard-icon text-warning"><i class="fa-solid fa-book"></i></div>
-                    <h5 class="mb-2 text-dark">Create Ledger</h5>
-                    <p class="text-muted mb-0">Add or view item ledger</p>
+                    <h5 class="mb-2">Create Ledger</h5>
+                    <p class="mb-0">Add or view item ledger</p>
                 </div>
             </a>
         </div>
         <!-- Receive Items -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('receive') }}" class="text-decoration-none">
                 <div class="card dashboard-card text-center p-4 h-100">
                     <div class="dashboard-icon text-primary"><i class="fa-solid fa-boxes-stacked"></i></div>
-                    <h5 class="mb-2 text-dark">Receive Items</h5>
-                    <p class="text-muted mb-0">Add new items to inventory</p>
+                    <h5 class="mb-2">Receive Items</h5>
+                    <p class="mb-0">Add new items to inventory</p>
                 </div>
             </a>
         </div>
         <!-- Issue Items -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('issue') }}" class="text-decoration-none">
                 <div class="card dashboard-card text-center p-4 h-100">
                     <div class="dashboard-icon text-danger"><i class="fa-solid fa-box-open"></i></div>
-                    <h5 class="mb-2 text-dark">Issue Items</h5>
-                    <p class="text-muted mb-0">Issue items to personnel</p>
+                    <h5 class="mb-2">Issue Items</h5>
+                    <p class="mb-0">Issue items to personnel</p>
                 </div>
             </a>
         </div>
         <!-- User Management -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('user_list') }}" class="text-decoration-none">
                 <div class="card dashboard-card text-center p-4 h-100">
                     <div class="dashboard-icon" style="color:#6f42c1;"><i class="fa-solid fa-users"></i></div>
-                    <h5 class="mb-2 text-dark">User Management</h5>
-                    <p class="text-muted mb-0">Manage system users</p>
+                    <h5 class="mb-2">User Management</h5>
+                    <p class="mb-0">Manage system users</p>
                 </div>
             </a>
         </div>
         <!-- Manage Head & Office Name -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('manage_head_office') }}" class="text-decoration-none">
                 <div class="card dashboard-card text-center p-4 h-100">
                     <div class="dashboard-icon" style="color:#198754;"><i class="fa-solid fa-building-user"></i></div>
-                    <h5 class="mb-2 text-dark">Manage Head & Office</h5>
-                    <p class="text-muted mb-0">Add, update or delete Head & Office Name</p>
+                    <h5 class="mb-2">Manage Head & Office</h5>
+                    <p class="mb-0">Add, update or delete Head & Office Name</p>
                 </div>
             </a>
         </div>
-        <!-- print ledger -->
-        <div class="col-md-3">
+        <!-- Print Ledger -->
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('print_ledger') }}" class="text-decoration-none">
                 <div class="card dashboard-card text-center p-4 h-100">
                     <div class="dashboard-icon" style="color:#0d6efd;"><i class="fa-solid fa-file-lines"></i></div>
-                    <h5 class="mb-2 text-dark">Print Ledger</h5>
-                    <p class="text-muted mb-0">View & export complete ledger</p>
+                    <h5 class="mb-2">Print Ledger</h5>
+                    <p class="mb-0">View & export complete ledger</p>
                 </div>
             </a>
         </div>
         <!-- Transaction Report -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('report') }}" class="text-decoration-none">
                 <div class="card dashboard-card text-center p-4 h-100">
                     <div class="dashboard-icon" style="color:#0d6efd;"><i class="fa-solid fa-file-lines"></i></div>
-                    <h5 class="mb-2 text-dark">Transaction Report</h5>
-                    <p class="text-muted mb-0">View & export complete transaction report</p>
+                    <h5 class="mb-2">Transaction Report</h5>
+                    <p class="mb-0">View & export complete transaction report</p>
                 </div>
             </a>
         </div>
         <!-- Items Category -->
-        <div class="col-md-3">
+        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
             <a href="{{ url_for('items_category') }}" class="text-decoration-none">
                 <div class="card dashboard-card text-center p-4 h-100">
                     <div class="dashboard-icon" style="color:#fd7e14;"><i class="fa-solid fa-tags"></i></div>
-                    <h5 class="mb-2 text-dark">Items Category</h5>
-                    <p class="text-muted mb-0">Add or manage item categories</p>
+                    <h5 class="mb-2">Items Category</h5>
+                    <p class="mb-0">Add or manage item categories</p>
                 </div>
             </a>
         </div>
-    </div>
-    <!-- Add a button or link to open the report page -->
-    <div style="text-align:center; margin-top:30px;">
-        <a href="{{ url_for('report') }}">
-            <button style="padding:12px 40px; font-size:1.2em; background:#2563eb; color:#fff; border:none; border-radius:8px; cursor:pointer;">
-                Open Report Page
-            </button>
-        </a>
     </div>
 </div>
 </body>
