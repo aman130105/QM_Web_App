@@ -4,33 +4,114 @@
     <meta charset="UTF-8">
     <title>Login - CISF QM</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body {
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            min-height: 100vh;
+        }
+        .login-card {
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px #0002;
+            padding: 36px 32px 32px 32px;
+            margin: 60px auto 0 auto;
+            max-width: 400px;
+        }
+        .login-title {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: bold;
+            color: #2d3a4a;
+            margin-bottom: 18px;
+            letter-spacing: 1px;
+        }
+        .login-logo {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .login-logo i {
+            font-size: 2.5rem;
+            color: #0d6efd;
+        }
+        .form-label {
+            font-weight: 600;
+            color: #2d3a4a;
+        }
+        .form-control {
+            border-radius: 7px;
+            border: 1.5px solid #bfc9d9;
+            font-size: 1.08em;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+        }
+        .form-control:focus {
+            border: 1.5px solid #2d8cf0;
+            box-shadow: 0 0 0 2px #93c5fd55;
+        }
+        .login-btn, .register-btn {
+            width: 48%;
+            padding: 10px 0;
+            font-size: 1.08em;
+            border-radius: 7px;
+            font-weight: bold;
+            border: none;
+            transition: background 0.2s, color 0.2s;
+        }
+        .login-btn {
+            background: #2d8cf0;
+            color: #fff;
+        }
+        .login-btn:hover {
+            background: #1765ad;
+        }
+        .register-btn {
+            background: #e3e8f0;
+            color: #2d3a4a;
+        }
+        .register-btn:hover {
+            background: #bfc9d9;
+        }
+        .alert-danger {
+            margin-top: 18px;
+            border-radius: 7px;
+            font-size: 1.08em;
+        }
+        @media (max-width: 600px) {
+            .login-card {
+                padding: 18px 6vw 18px 6vw;
+            }
+            .login-title {
+                font-size: 1.3rem;
+            }
+        }
+    </style>
 </head>
-<body class="bg-light">
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
-            <h3 class="text-center mb-3">CISF QM Login</h3>
-            <form method="POST" action="{{ url_for('login') }}">
-                <div class="mb-3">
-                    <label for="username" class="form-label">Username</label>
-                    <input type="text" class="form-control" name="username" required>
-                </div>
-                <div class="mb-3">
-                    <label for="password" class="form-label">Password</label>
-                    <input type="password" class="form-control" name="password" required>
-                </div>
-                <div style="display: flex; justify-content: center; gap: 10px;">
-                    <button class="btn btn-primary" type="submit">Login</button>
-                    <a href="{{ url_for('register') }}" class="btn btn-secondary">
-                        Register
-                    </a>
-                </div>
-                {% if error %}
-                    <div class="alert alert-danger text-center mt-3">{{ error }}</div>
-                {% endif %}
-            </form>
-        </div>
+<body>
+<div class="login-card">
+    <div class="login-logo">
+        <i class="fa-solid fa-warehouse"></i>
     </div>
+    <div class="login-title">CISF QM Login</div>
+    <form method="POST" action="{{ url_for('login') }}">
+        <div class="mb-3">
+            <label for="username" class="form-label"><i class="fa fa-user"></i> Username</label>
+            <input type="text" class="form-control" name="username" id="username" required autocomplete="username">
+        </div>
+        <div class="mb-3">
+            <label for="password" class="form-label"><i class="fa fa-lock"></i> Password</label>
+            <input type="password" class="form-control" name="password" id="password" required autocomplete="current-password">
+        </div>
+        <div style="display: flex; justify-content: space-between; gap: 10px;">
+            <button class="login-btn" type="submit"><i class="fa fa-sign-in-alt"></i> Login</button>
+            <a href="{{ url_for('register') }}" class="register-btn text-center">
+                <i class="fa fa-user-plus"></i> Register
+            </a>
+        </div>
+        {% if error %}
+            <div class="alert alert-danger text-center">{{ error }}</div>
+        {% endif %}
+    </form>
 </div>
 </body>
 </html>

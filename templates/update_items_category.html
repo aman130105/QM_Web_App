@@ -1,70 +1,123 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Update Item Category</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Category</title>
     <style>
-        .update-container {
-            max-width: 400px;
-            margin: 50px auto;
+        body {
+            background: #f4f6fb;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .main-card {
+            max-width: 500px;
+            margin: 60px auto 0 auto;
             background: #fff;
-            border-radius: 10px;
-            box-shadow: 0 2px 16px #0001;
-            padding: 32px;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px #0002;
+            padding: 32px 36px 36px 36px;
+            position: relative;
         }
-        .form-row {
-            margin-bottom: 18px;
+        .back-button {
+            position: absolute;
+            top: 24px;
+            right: 32px;
         }
-        label {
-            display: block;
-            margin-bottom: 6px;
-            font-weight: 500;
-        }
-        input[type="text"] {
-            width: 100%;
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #ccc;
-        }
-        .btn-row {
-            display: flex;
-            gap: 12px;
-            margin-top: 18px;
-        }
-        button, .btn-cancel {
-            padding: 8px 22px;
-            border-radius: 6px;
+        .back-button button {
+            background: #e3e8f0;
+            color: #222;
             border: none;
+            border-radius: 6px;
+            padding: 7px 18px;
             font-size: 1em;
             cursor: pointer;
+            transition: background 0.2s;
         }
-        button[type="submit"] {
+        .back-button button:hover {
+            background: #cbd5e1;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 2em;
+            color: #2d3a4a;
+            letter-spacing: 1px;
+        }
+        .message {
+            background: #e7f4e4;
+            color: #256029;
+            border: 1px solid #b7e0b0;
+            padding: 12px 18px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            font-size: 1em;
+        }
+        .form-container {
+            margin: 24px 0 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .form-container label {
+            font-weight: 500;
+            color: #2d3a4a;
+            margin-bottom: 6px;
+        }
+        .form-container input {
+            padding: 7px 12px;
+            border-radius: 6px;
+            border: 1px solid #bfc9d9;
+            font-size: 1em;
+            transition: border 0.2s;
+        }
+        .form-container input:focus {
+            border: 1.5px solid #2d8cf0;
+            outline: none;
+        }
+        .form-container button[type="submit"] {
             background: #2d8cf0;
             color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 9px 22px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
         }
-        .btn-cancel {
-            background: #eee;
-            color: #222;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
+        .form-container button[type="submit"]:hover {
+            background: #1765ad;
         }
-        button[type="submit"]:hover { background: #1762a7; }
-        .btn-cancel:hover { background: #ddd; }
+        @media (max-width: 600px) {
+            .main-card {
+                padding: 14px 4vw 18px 4vw;
+            }
+            .back-button {
+                top: 10px;
+                right: 10px;
+            }
+        }
     </style>
 </head>
 <body>
-<div class="update-container">
-    <h2>Update Item Category</h2>
-    <form method="POST" action="{{ url_for('update_category', id=category['id']) }}">
-        <div class="form-row">
-            <label for="category_name">Category Name:</label>
-            <input type="text" name="category_name" id="category_name" value="{{ category['category_name'] }}" required>
+    <div class="main-card">
+        <div class="back-button">
+            <a href="{{ url_for('items_category') }}">
+                <button type="button">Back</button>
+            </a>
         </div>
-        <div class="btn-row">
-            <button type="submit">Update</button>
-            <a href="{{ url_for('items_category') }}" class="btn-cancel">Cancel</a>
+        <h1>Update Category</h1>
+        {% if message %}
+            <div class="message">{{ message }}</div>
+        {% endif %}
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('update_category', id=category['id']) }}">
+                <label for="category_name">Category Name:</label>
+                <input type="text" id="category_name" name="category_name" value="{{ category['category_name'] }}" required>
+                <button type="submit">Update Category</button>
+            </form>
         </div>
-    </form>
-</div>
+    </div>
 </body>
 </html>
