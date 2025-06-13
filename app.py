@@ -663,25 +663,33 @@ def report():
     if head:
         where.append("head=%s")
         params.append(head)
+    # Fix: Only filter by issued_to for issued_items, not for received_items
+    where_received = list(where)
+    params_received = list(params)
+    where_issued = list(where)
+    params_issued = list(params)
     if office:
-        where.append("issued_to=%s")
-        params.append(office)
-    where.append("date BETWEEN %s AND %s")
-    params.extend([from_date, to_date])
-    where_clause = " AND ".join(where) if where else "1=1"
+        where_issued.append("issued_to=%s")
+        params_issued.append(office)
+    where_received.append("date BETWEEN %s AND %s")
+    params_received.extend([from_date, to_date])
+    where_issued.append("date BETWEEN %s AND %s")
+    params_issued.extend([from_date, to_date])
+    where_clause_received = " AND ".join(where_received) if where_received else "1=1"
+    where_clause_issued = " AND ".join(where_issued) if where_issued else "1=1"
     query = f"""
         SELECT date, category, 'Receive' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
                NULL as previous, qty as received, NULL as issued, NULL as office
         FROM received_items
-        WHERE {where_clause}
+        WHERE {where_clause_received}
         UNION ALL
         SELECT date, category, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
                NULL as previous, NULL as received, qty as issued, issued_to as office
         FROM issued_items
-        WHERE {where_clause}
+        WHERE {where_clause_issued}
         ORDER BY date DESC
     """
-    cur.execute(query, params * 2)
+    cur.execute(query, params_received + params_issued)
     transactions = [dict(row) for row in cur.fetchall()]
     cur.execute("SELECT DISTINCT category FROM ledger")
     categories = [row['category'] for row in cur.fetchall()]

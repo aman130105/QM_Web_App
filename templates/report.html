@@ -128,27 +128,74 @@
             </tr>
         </thead>
         <tbody>
+            {% set total_receive = 0 %}
+            {% set total_issue = 0 %}
+            {% set filter_applied = request.args.get('category') or request.args.get('item') or request.args.get('head') or request.args.get('office') or request.args.get('from_date') or request.args.get('to_date') %}
+            {% set has_data = false %}
             {% for t in transactions %}
-            <tr>
-                <td>{{ t.date if t.date else '--' }}</td>
-                <td>{{ t.type if t.type else '--' }}</td>
-                <td>{{ t.category if t.category else '--' }}</td>
-                <td>{{ t.item if t.item else '--' }}</td>
-                <td>{{ t.head if t.head else '--' }}</td>
-                <td>{{ t.lp_no if t.lp_no else '--' }}</td>
-                <td>{{ t.previous if t.previous else '--' }}</td>
-                <td>{{ t.received if t.received else '--' }}</td>
-                <td>{{ t.issued if t.issued else '--' }}</td>
-                <td>{{ t.office if t.office else '--' }}</td>
-            </tr>
+                {% set show_row = true %}
+                {% if filter_applied %}
+                    {# Office filter: Only show rows where office matches (for Issue type) #}
+                    {% if request.args.get('office') %}
+                        {% if t.type == 'Issue' %}
+                            {% if t.office != request.args.get('office') %}
+                                {% set show_row = false %}
+                            {% endif %}
+                        {% else %}
+                            {% set show_row = false %}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+                {% if show_row %}
+                <tr>
+                    <td>{{ t.date if t.date else '--' }}</td>
+                    <td>{{ t.type if t.type else '--' }}</td>
+                    <td>{{ t.category if t.category else '--' }}</td>
+                    <td>{{ t.item if t.item else '--' }}</td>
+                    <td>{{ t.head if t.head else '--' }}</td>
+                    <td>{{ t.lp_no if t.lp_no else '--' }}</td>
+                    <td>{{ t.previous if t.previous else '--' }}</td>
+                    <td>
+                        {% if t.type == 'Receive' %}
+                            {% set _ = namespace(val=total_receive) %}
+                            {% set total_receive = total_receive + (t.received or 0) %}
+                            {{ t.received if t.received else '--' }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if t.type == 'Issue' %}
+                            {% set _ = namespace(val=total_issue) %}
+                            {% set total_issue = total_issue + (t.issued or 0) %}
+                            {{ t.issued if t.issued else '--' }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <td>{{ t.office if t.office else '--' }}</td>
+                </tr>
+                {% set has_data = true %}
+                {% endif %}
             {% endfor %}
+            {% if not has_data %}
+            <tr>
+                <td colspan="10" style="text-align:center;color:#888;">No data found.</td>
+            </tr>
+            {% endif %}
         </tbody>
     </table>
     </div>
     <div class="totals-row">
-        <span style="width:33%;display:inline-block;">Total Stock Received = {{ total_received }}</span>
-        <span style="width:33%;display:inline-block;">Total Stock Issued = {{ total_issued }}</span>
-        <span style="width:33%;display:inline-block;">Total Stock Balance = {{ total_balance }}</span>
+        {% if filter_applied %}
+            <span style="width:33%;display:inline-block;">Total Stock Received = {{ total_receive }}</span>
+            <span style="width:33%;display:inline-block;">Total Stock Issued = {{ total_issue }}</span>
+            <span style="width:33%;display:inline-block;">Total Stock Balance = {{ total_receive - total_issue }}</span>
+        {% else %}
+            <span style="width:33%;display:inline-block;">Total Stock Received = {{ total_received }}</span>
+            <span style="width:33%;display:inline-block;">Total Stock Issued = {{ total_issued }}</span>
+            <span style="width:33%;display:inline-block;">Total Stock Balance = {{ total_balance }}</span>
+        {% endif %}
     </div>
     <div class="actions">
         <button type="button" class="excel"
