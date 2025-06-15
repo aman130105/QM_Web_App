@@ -6,7 +6,7 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            font-size: 13px;
+            font-size: 11px;
             margin: 0;
             padding: 0;
             background: #fff;
@@ -125,11 +125,6 @@
 </head>
 <body>
 <div class="container">
-    <div style="display: flex; justify-content: flex-end; margin-top: 18px;">
-        <a href="{{ url_for('renewal_voucher') }}" style="background: #1976d2; color: #fff; padding: 8px 18px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 1.08em;">
-            Renewal Voucher
-        </a>
-    </div>
     <div class="header-row">
         <div class="header-left">
             <div><strong>Ph: 080-22001521</strong></div>
@@ -189,9 +184,6 @@
                 {% set sn = sn + 1 %}
             {% endfor %}
             {% if sn == 1 %}
-                <tr>
-                    <td colspan="10">No transaction entries found for the selected item.</td>
-                </tr>
             {% endif %}
         </tbody>
     </table>

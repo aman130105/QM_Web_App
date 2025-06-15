@@ -6,6 +6,9 @@ import io
 from flask import send_file
 import openpyxl
 from psycopg2.extras import RealDictCursor
+import pdfkit
+import shutil
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with a strong key
@@ -17,6 +20,13 @@ DB_CONFIG = {
     'user': 'postgres',    # Use your actual PostgreSQL username
     'password': '12Marks@255'  # Your actual password
 }
+
+# Set up pdfkit configuration
+WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
+if WKHTMLTOPDF_PATH is None:
+    WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"  # adjust if needed
+
+pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
 # Database helper
 def get_db_connection():
@@ -741,11 +751,12 @@ def report():
     cur.execute("SELECT DISTINCT issued_to FROM issued_items")
     offices = [row['issued_to'] for row in cur.fetchall()]
     items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
-    cur.execute("SELECT SUM(qty) FROM received_items")
-    total_received = cur.fetchone()['sum'] or 0 if cur.rowcount else 0
-    cur.execute("SELECT SUM(qty) FROM issued_items")
-    total_issued = cur.fetchone()['sum'] or 0 if cur.rowcount else 0
+
+    # Calculate totals from filtered transactions
+    total_received = sum(t.get('received', 0) or 0 for t in transactions if t.get('type') == 'Receive')
+    total_issued = sum(t.get('issued', 0) or 0 for t in transactions if t.get('type') == 'Issue')
     total_balance = total_received - total_issued
+
     conn.close()
     return render_template(
         'report.html',
@@ -1019,7 +1030,6 @@ def export_ledger_pdf():
         item_info=item_info,
         transactions=rows
     )
-    import pdfkit
     pdf = pdfkit.from_string(rendered, False)
     return send_file(
         io.BytesIO(pdf),
@@ -1074,13 +1084,157 @@ def delete_category(id):
     conn.close()
     return redirect(url_for('items_category'))
 
+class RenewalVoucher:
+    @staticmethod
+    def get_all(office=None):
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        if office:
+            cur.execute("SELECT * FROM renewal_voucher WHERE office=%s ORDER BY id DESC", (office,))
+        else:
+            cur.execute("SELECT * FROM renewal_voucher ORDER BY id DESC")
+        vouchers = cur.fetchall()
+        conn.close()
+        print("Fetched vouchers:", vouchers)  # Debug: See what is fetched
+        return [dict(row) for row in vouchers]
+
+    @staticmethod
+    def add(item_name, quantity, date, remarks, head=None, lp_no=None, office=None):
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "INSERT INTO renewal_voucher (item_name, quantity, date, remarks, head, lp_no, office) VALUES (%s, %s, %s, %s, %s, %s, %s)",
+            (item_name, quantity, date, remarks, head, lp_no, office)
+        )
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def update(voucher_id, item_name, quantity, date, remarks, head=None, lp_no=None, office=None):
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE renewal_voucher SET item_name=%s, quantity=%s, date=%s, remarks=%s, head=%s, lp_no=%s, office=%s WHERE id=%s",
+            (item_name, quantity, date, remarks, head, lp_no, office, voucher_id)
+        )
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def delete(voucher_id):
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM renewal_voucher WHERE id=%s", (voucher_id,))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_by_id(voucher_id):
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM renewal_voucher WHERE id=%s", (voucher_id,))
+        row = cur.fetchone()
+        conn.close()
+        return dict(row) if row else None
+
+def create_renewal_voucher_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS renewal_voucher (
+            id SERIAL PRIMARY KEY,
+            item_name TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            remarks TEXT,
+            head TEXT,
+            lp_no TEXT,
+            office TEXT
+        )
+    """)
+    # Ensure 'office' column exists (for upgrades)
+    cur.execute("ALTER TABLE renewal_voucher ADD COLUMN IF NOT EXISTS office TEXT;")
+    conn.commit()
+    conn.close()
+
+@app.route('/renewal_voucher')
+def renewal_voucher():
+    office = request.args.get('office', '')
+    offices = HeadOfficeManager.get_all_offices()
+    vouchers = RenewalVoucher.get_all(office if office else None)
+    return render_template('renewal_voucher.html', vouchers=vouchers, offices=offices, selected_office=office)
+
+@app.route('/export_renewal_voucher_excel')
+def export_renewal_voucher_excel():
+    office = request.args.get('office', '')
+    vouchers = RenewalVoucher.get_all(office if office else None)
+    import openpyxl
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Renewal Voucher"
+    headers = ["SL No.", "Item Name & Description", "Head", "L/P No.", "Qty Issue", "Issue Date", "Remark", "Office"]
+    ws.append(headers)
+    for idx, v in enumerate(vouchers, 1):
+        ws.append([
+            idx, v['item_name'], v.get('head', ''), v.get('lp_no', ''), v['quantity'], v['date'], v.get('remarks', ''), v.get('office', '')
+        ])
+    output = io.BytesIO()
+    wb.save(output)
+    output.seek(0)
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name="renewal_voucher.xlsx",
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+@app.route('/export_renewal_voucher_pdf')
+def export_renewal_voucher_pdf():
+    office = request.args.get('office', '')
+    vouchers = RenewalVoucher.get_all(office if office else None)
+    rendered = render_template('renewal_voucher_pdf.html', vouchers=vouchers, office=office)
+    options = {
+        'enable-local-file-access': None,
+        'load-error-handling': 'ignore',
+        'load-media-error-handling': 'ignore'
+    }
+    pdf = pdfkit.from_string(rendered, False, configuration=pdfkit_config, options=options)
+    return send_file(
+        io.BytesIO(pdf),
+        as_attachment=True,
+        download_name="renewal_voucher.pdf",
+        mimetype="application/pdf"
+    )
+
+@app.route('/add_renewal_voucher', methods=['GET', 'POST'])
+def add_renewal_voucher():
+    message = None
+    error = None
+    offices = HeadOfficeManager.get_all_offices()
+    if request.method == 'POST':
+        item_name = request.form.get('item_name')
+        quantity = request.form.get('quantity')
+        date = request.form.get('date')
+        remarks = request.form.get('remarks')
+        head = request.form.get('head')
+        lp_no = request.form.get('lp_no')
+        office = request.form.get('office')
+        if not (item_name and quantity and date and office):
+            error = "Item name, quantity, date, and office are required."
+        else:
+            try:
+                RenewalVoucher.add(item_name, quantity, date, remarks, head, lp_no, office)
+                message = "Renewal voucher added successfully."
+            except Exception as e:
+                error = f"Error: {str(e)}"
+    return render_template('add_renewal_voucher.html', message=message, error=error, offices=offices)
+
 if __name__ == '__main__':
     create_ledger_table()
     create_received_items_table()
     create_items_category_table()
     create_head_office_table()
     create_ledger_entries_table()
-    app.run(debug=True)
-
-if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=10000)
+    create_renewal_voucher_table()
+    port = int(os.environ.get('PORT', 10000))
+    app.run(host='0.0.0.0', port=port)

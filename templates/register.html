@@ -2,47 +2,173 @@
 <html lang="en">
 <head>
     <title>Register</title>
+    <style>
+        .register-container {
+            max-width: 420px;
+            margin: 48px auto 0 auto;
+            background: #23272f;
+            border-radius: 16px;
+            box-shadow: 0 2px 18px rgba(0,0,0,0.22);
+            padding: 38px 32px 30px 32px;
+            color: #ffe600;
+            position: relative;
+        }
+        .register-title {
+            text-align: center;
+            font-size: 1.7em;
+            font-weight: 700;
+            margin-bottom: 22px;
+            color: #ffe600;
+            letter-spacing: 1px;
+        }
+        .register-form label {
+            font-weight: 500;
+            color: #ffe600;
+            margin-bottom: 6px;
+            display: block;
+        }
+        .register-form input {
+            width: 100%;
+            padding: 12px 14px;
+            margin-bottom: 18px;
+            border: 1.5px solid #444;
+            border-radius: 7px;
+            background: #181c24;
+            color: #fff;
+            font-size: 1.08em;
+            transition: border 0.18s, box-shadow 0.18s;
+            box-sizing: border-box;
+        }
+        .register-form input:focus {
+            border: 1.5px solid #ffe600;
+            outline: none;
+            box-shadow: 0 0 0 2px #ffe60033;
+        }
+        .register-form button {
+            width: 100%;
+            background: #ffe600;
+            color: #181c24;
+            font-weight: bold;
+            font-size: 1.13em;
+            border: none;
+            border-radius: 7px;
+            padding: 13px 0;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s, border 0.18s;
+            letter-spacing: 0.5px;
+        }
+        .register-form button:hover {
+            background: #181c24;
+            color: #ffe600;
+            border: 1.5px solid #ffe600;
+        }
+        .register-error {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 1.08em;
+            color: #ff5252;
+            background: #2d2323;
+            border-radius: 5px;
+            padding: 7px 0;
+        }
+        .register-success {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 1.08em;
+            color: #28a745;
+            background: #1e2d23;
+            border-radius: 5px;
+            padding: 7px 0;
+        }
+        .register-hint {
+            text-align: center;
+            color: #bbb;
+            font-size: 0.98em;
+            margin-bottom: 18px;
+        }
+        .register-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 18px;
+            margin-top: 10px;
+        }
+        .register-actions button,
+        .register-actions a {
+            flex: 1;
+            font-size: 1.08em;
+            font-weight: bold;
+            border: none;
+            border-radius: 7px;
+            padding: 12px 0;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s, border 0.18s;
+            text-align: center;
+            text-decoration: none;
+        }
+        .register-actions .register-btn {
+            background: #ffe600;
+            color: #181c24;
+        }
+        .register-actions .register-btn:hover {
+            background: #181c24;
+            color: #ffe600;
+            border: 1.5px solid #ffe600;
+        }
+        .register-actions .back-btn {
+            background: #23272f;
+            color: #ffe600;
+            border: 1.5px solid #ffe600;
+        }
+        .register-actions .back-btn:hover {
+            background: #ffe600;
+            color: #181c24;
+        }
+        @media (max-width: 600px) {
+            .register-container {
+                padding: 18px 6px 14px 6px;
+                max-width: 98vw;
+            }
+            .register-title { font-size: 1.1em; }
+        }
+    </style>
 </head>
 <body>
-<div class="register-card">
-    <div class="register-logo">
-        <i class="fa-solid fa-user-plus"></i>
-    </div>
+<div class="register-container">
     <div class="register-title">Register New User</div>
-    <form method="POST" action="{{ url_for('register') }}">
-        <div class="mb-3">
-            <label for="name" class="form-label"><i class="fa fa-user"></i> Name</label>
-            <input type="text" class="form-control" name="name" id="name" required autocomplete="name">
+    <div class="register-hint">Please fill in your details to create an account.</div>
+    {% if error %}
+        <div class="register-error">{{ error }}</div>
+    {% endif %}
+    {% if message %}
+        <div class="register-success">{{ message }}</div>
+    {% endif %}
+    <form method="post" class="register-form" autocomplete="off">
+        <label for="name"><i class="fa-solid fa-user"></i> User's Name</label>
+        <input type="text" name="name" id="name" required placeholder="Enter your name">
+
+        <label for="cisf_no"><i class="fa-solid fa-id-card"></i> CISF No</label>
+        <input type="text" name="cisf_no" id="cisf_no" required placeholder="Enter CISF No">
+
+        <label for="rank"><i class="fa-solid fa-user-tie"></i> Rank</label>
+        <input type="text" name="rank" id="rank" required placeholder="Enter Rank">
+
+        <label for="mobile"><i class="fa-solid fa-phone"></i> Mobile No</label>
+        <input type="text" name="mobile" id="mobile" required placeholder="Enter Mobile No">
+
+        <label for="username"><i class="fa-solid fa-user"></i> User Name</label>
+        <input type="text" name="username" id="username" required autocomplete="username" placeholder="Enter username">
+
+        <label for="password"><i class="fa-solid fa-lock"></i> Password</label>
+        <input type="password" name="password" id="password" required autocomplete="new-password" placeholder="Enter password">
+
+        <label for="confirm_password"><i class="fa-solid fa-lock"></i> Confirm Password</label>
+        <input type="password" name="confirm_password" id="confirm_password" required autocomplete="new-password" placeholder="Re-enter password">
+
+        <div class="register-actions">
+            <button type="submit" class="register-btn"><i class="fa-solid fa-user-plus"></i> Register</button>
+            <a href="{{ url_for('login') }}" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
         </div>
-        <div class="mb-3">
-            <label for="cisf_no" class="form-label"><i class="fa fa-id-card"></i> CISF No.</label>
-            <input type="text" class="form-control" name="cisf_no" id="cisf_no" required>
-        </div>
-        <div class="mb-3">
-            <label for="rank" class="form-label"><i class="fa fa-user-shield"></i> Rank</label>
-            <input type="text" class="form-control" name="rank" id="rank" required>
-        </div>
-        <div class="mb-3">
-            <label for="mobile" class="form-label"><i class="fa fa-phone"></i> Mobile No.</label>
-            <input type="tel" class="form-control" name="mobile" id="mobile" required pattern="[0-9]{10}" maxlength="10">
-        </div>
-        <div class="mb-3">
-            <label for="username" class="form-label"><i class="fa fa-user"></i> Username</label>
-            <input type="text" class="form-control" name="username" id="username" required autocomplete="username">
-        </div>
-        <div class="mb-3">
-            <label for="password" class="form-label"><i class="fa fa-lock"></i> Password</label>
-            <input type="password" class="form-control" name="password" id="password" required autocomplete="new-password">
-        </div>
-        <div style="display: flex; justify-content: space-between; gap: 10px;">
-            <button class="register-btn" type="submit"><i class="fa fa-user-plus"></i> Register</button>
-            <a href="{{ url_for('login') }}" class="login-btn text-center">
-                <i class="fa fa-sign-in-alt"></i> Login
-            </a>
-        </div>
-        {% if error %}
-            <div class="alert alert-danger text-center">{{ error }}</div>
-        {% endif %}
     </form>
 </div>
 </body>

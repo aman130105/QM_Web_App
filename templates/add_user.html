@@ -123,6 +123,74 @@
             line-height: 16px;
             cursor: pointer;
         }
+        /* Add User Form Styling */
+        .add-user-container {
+            max-width: 480px;
+            margin: 48px auto 0 auto;
+            background: #23272f;
+            border-radius: 14px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+            padding: 36px 32px 28px 32px;
+            color: #ffe600;
+        }
+        .add-user-title {
+            text-align: center;
+            font-size: 1.6em;
+            font-weight: 700;
+            margin-bottom: 24px;
+            color: #ffe600;
+            letter-spacing: 1px;
+        }
+        .add-user-form label {
+            font-weight: 500;
+            color: #ffe600;
+            margin-bottom: 6px;
+        }
+        .add-user-form input {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 18px;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background: #181c24;
+            color: #fff;
+            font-size: 1em;
+            transition: border 0.18s;
+        }
+        .add-user-form input:focus {
+            border: 1.5px solid #ffe600;
+            outline: none;
+        }
+        .add-user-form button {
+            width: 100%;
+            background: #ffe600;
+            color: #181c24;
+            font-weight: bold;
+            font-size: 1.08em;
+            border: none;
+            border-radius: 6px;
+            padding: 12px 0;
+            margin-top: 8px;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+        }
+        .add-user-form button:hover {
+            background: #181c24;
+            color: #ffe600;
+            border: 1.5px solid #ffe600;
+        }
+        .add-user-message {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 1.08em;
+            color: #28a745;
+        }
+        .add-user-error {
+            text-align: center;
+            margin-bottom: 16px;
+            font-size: 1.08em;
+            color: #ff5252;
+        }
     </style>
 </head>
 <body>
@@ -179,5 +247,115 @@
             </form>
         </div>
     </div>
+    {% extends "dashboard.html" %}
+    {% block content %}
+    <style>
+    /* Add User Form Styling */
+    .add-user-container {
+        max-width: 480px;
+        margin: 48px auto 0 auto;
+        background: #23272f;
+        border-radius: 14px;
+        box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+        padding: 36px 32px 28px 32px;
+        color: #ffe600;
+    }
+    .add-user-title {
+        text-align: center;
+        font-size: 1.6em;
+        font-weight: 700;
+        margin-bottom: 24px;
+        color: #ffe600;
+        letter-spacing: 1px;
+    }
+    .add-user-form label {
+        font-weight: 500;
+        color: #ffe600;
+        margin-bottom: 6px;
+    }
+    .add-user-form input {
+        width: 100%;
+        padding: 10px 12px;
+        margin-bottom: 18px;
+        border: 1px solid #444;
+        border-radius: 6px;
+        background: #181c24;
+        color: #fff;
+        font-size: 1em;
+        transition: border 0.18s;
+    }
+    .add-user-form input:focus {
+        border: 1.5px solid #ffe600;
+        outline: none;
+    }
+    .add-user-form button {
+        width: 100%;
+        background: #ffe600;
+        color: #181c24;
+        font-weight: bold;
+        font-size: 1.08em;
+        border: none;
+        border-radius: 6px;
+        padding: 12px 0;
+        margin-top: 8px;
+        cursor: pointer;
+        transition: background 0.18s, color 0.18s;
+    }
+    .add-user-form button:hover {
+        background: #181c24;
+        color: #ffe600;
+        border: 1.5px solid #ffe600;
+    }
+    .add-user-message {
+        text-align: center;
+        margin-bottom: 16px;
+        font-size: 1.08em;
+        color: #28a745;
+    }
+    .add-user-error {
+        text-align: center;
+        margin-bottom: 16px;
+        font-size: 1.08em;
+        color: #ff5252;
+    }
+    @media (max-width: 600px) {
+        .add-user-container {
+            padding: 18px 6px 14px 6px;
+            max-width: 98vw;
+        }
+        .add-user-title { font-size: 1.1em; }
+    }
+    </style>
+    <div class="add-user-container">
+        <div class="add-user-title">Add New User</div>
+        {% if message %}
+            <div class="add-user-message">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="add-user-error">{{ error }}</div>
+        {% endif %}
+        <form method="post" class="add-user-form">
+            <label for="name">Name</label>
+            <input type="text" name="name" id="name" required>
+
+            <label for="cisf_no">CISF No.</label>
+            <input type="text" name="cisf_no" id="cisf_no" required>
+
+            <label for="rank">Rank</label>
+            <input type="text" name="rank" id="rank" required>
+
+            <label for="mobile">Mobile</label>
+            <input type="text" name="mobile" id="mobile" required>
+
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" required>
+
+            <label for="password">Password</label>
+            <input type="password" name="password" id="password" required>
+
+            <button type="submit">Add User</button>
+        </form>
+    </div>
+    {% endblock %}
 </body>
 </html>

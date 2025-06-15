@@ -7,162 +7,179 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
     <style>
         body {
-            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            background: linear-gradient(135deg, #23272f 0%, #181c24 100%);
             min-height: 100vh;
+            color: #f1f1f1;
+            font-family: 'Segoe UI', Arial, sans-serif;
         }
-        .dashboard-card {
-            border-radius: 18px;
-            box-shadow: 0 4px 24px rgba(0,0,0,0.08);
-            transition: transform 0.2s, box-shadow 0.2s;
-            background: #fff;
-            border: none;
+        .header-dark {
+            background: #181c24;
+            color: #ffe600;
+            padding: 32px 0 18px 0;
+            text-align: center;
+            font-size: 2.3em;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            border-bottom: 4px solid #ffe600;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.13);
         }
-        .dashboard-card:hover {
-            transform: translateY(-7px) scale(1.035);
-            box-shadow: 0 8px 32px rgba(0,0,0,0.13);
+        .dashboard-title {
+            font-size: 2.1em;
+            font-weight: 700;
+            color: #ffe600;
+            margin: 36px 0 18px 0;
+            text-align: center;
+            letter-spacing: 1px;
         }
-        .dashboard-icon {
-            font-size: 2.7rem;
-            margin-bottom: 12px;
+        .dashboard-subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            color: #bbb;
+            margin-bottom: 32px;
+        }
+        .quick-menu {
+            margin: 0 auto;
+            margin-top: 18px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 32px;
+            justify-content: center;
+            width: 95%;
+            max-width: 1200px;
+        }
+        .quick-card {
+            background: #23272f;
+            border-radius: 14px;
+            box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+            width: 260px;
+            min-height: 180px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-decoration: none;
+            color: #ffe600;
+            transition: box-shadow 0.18s, background 0.18s, color 0.18s, border 0.18s;
+            padding: 32px 0 22px 0;
+            border: 2px solid #23272f;
+            position: relative;
+        }
+        .quick-card:hover {
+            background: #181c24;
+            box-shadow: 0 4px 18px rgba(0,0,0,0.22);
+            color: #fff;
+            border-color: #ffe600;
+        }
+        .quick-card .icon {
+            font-size: 2.8em;
+            margin-bottom: 16px;
+            color: #ffe600;
+        }
+        .quick-card .title {
+            font-size: 1.25em;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #ffe600;
+        }
+        .quick-card .desc {
+            font-size: 1.08em;
+            color: #eee;
+            text-align: center;
+        }
+        .navbar-dark {
+            background: #23272f !important;
+            border-bottom: 2px solid #ffe600;
         }
         .navbar-brand {
             font-weight: bold;
             letter-spacing: 1px;
             font-size: 1.35rem;
+            color: #ffe600 !important;
         }
-        .dashboard-title {
-            font-size: 2.2rem;
-            font-weight: 700;
-            color: #2d3a4a;
-            margin-bottom: 36px;
-            text-align: center;
-            letter-spacing: 1px;
+        .navbar-text, .btn-light {
+            color: #ffe600 !important;
         }
-        .dashboard-card h5 {
-            font-size: 1.18rem;
-            font-weight: 600;
-            color: #2d3a4a;
+        .btn-light {
+            background: #23272f !important;
+            border: 1px solid #ffe600 !important;
         }
-        .dashboard-card p {
-            font-size: 0.98rem;
-            color: #6c757d;
+        .btn-light:hover {
+            background: #ffe600 !important;
+            color: #23272f !important;
         }
-        .dashboard-row {
-            row-gap: 32px;
+        @media (max-width: 1100px) {
+            .quick-menu { width: 98%; }
         }
-        @media (max-width: 991px) {
-            .dashboard-row {
-                row-gap: 24px;
-            }
+        @media (max-width: 900px) {
+            .header-dark { font-size: 1.3em; }
+            .quick-card { width: 180px; min-height: 120px; }
         }
-        @media (max-width: 767px) {
-            .dashboard-title {
-                font-size: 1.4rem;
-                margin-bottom: 18px;
-            }
-            .dashboard-card {
-                padding: 1.2rem 0.7rem !important;
-            }
+        @media (max-width: 600px) {
+            .quick-menu { gap: 12px; }
+            .header-dark { font-size: 1.1em; padding: 18px 0 10px 0; }
+            .dashboard-title { font-size: 1.2em; }
+            .quick-card { width: 98vw; min-height: 90px; }
         }
     </style>
 </head>
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <div class="container">
-        <span class="navbar-brand"><i class="fa-solid fa-warehouse me-2"></i>CISF QM Dashboard</span>
-        <div class="d-flex">
-            <span class="navbar-text text-white me-3">Welcome, {{ username }}</span>
-            <a href="{{ url_for('logout') }}" class="btn btn-light btn-sm">Logout</a>
-        </div>
+    <div class="header-dark">
+        Quarter Master, CISF Unit ASG Bangalore
     </div>
-</nav>
-
-<div class="container mt-5">
-    <div class="dashboard-title">Welcome to Quarter Master, CISF ASG Bangalore </div>
-    <div class="dashboard-subtitle">Quick Menu</div>
-    <div class="row dashboard-row justify-content-center">
-        <!-- Create Ledger -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-            <a href="{{ url_for('ledger') }}" class="text-decoration-none">
-                <div class="card dashboard-card text-center p-4 h-100">
-                    <div class="dashboard-icon text-warning"><i class="fa-solid fa-book"></i></div>
-                    <h5 class="mb-2">Create Ledger</h5>
-                    <p class="mb-0">Add or view item ledger</p>
-                </div>
-            </a>
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-dark">
+        <div class="container">
+            <span class="navbar-brand"><i class="fa-solid fa-warehouse me-2"></i>CISF QM Dashboard</span>
+            <div class="d-flex">
+                <span class="navbar-text me-3">Welcome, {{ username }}</span>
+                <a href="{{ url_for('logout') }}" class="btn btn-light btn-sm">Logout</a>
+            </div>
         </div>
-        <!-- Receive Items -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-            <a href="{{ url_for('receive') }}" class="text-decoration-none">
-                <div class="card dashboard-card text-center p-4 h-100">
-                    <div class="dashboard-icon text-primary"><i class="fa-solid fa-boxes-stacked"></i></div>
-                    <h5 class="mb-2">Receive Items</h5>
-                    <p class="mb-0">Add new items to inventory</p>
-                </div>
+    </nav>
+    <div class="container mt-5">
+        <h1 class="dashboard-title">Dashboard</h1>
+        <div class="quick-menu">
+            <a href="{{ url_for('ledger') }}" class="quick-card">
+                <div class="icon"><i class="fa-solid fa-book"></i></div>
+                <div class="title">Create Ledger</div>
+                <div class="desc">Add new ledger entries</div>
             </a>
-        </div>
-        <!-- Issue Items -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-            <a href="{{ url_for('issue') }}" class="text-decoration-none">
-                <div class="card dashboard-card text-center p-4 h-100">
-                    <div class="dashboard-icon text-danger"><i class="fa-solid fa-box-open"></i></div>
-                    <h5 class="mb-2 text-dark">Issue Items</h5>
-                    <p class="text-muted mb-0">Issue items to personnel</p>
-                </div>
+            <a href="{{ url_for('receive') }}" class="quick-card">
+                <div class="icon"><i class="fa-solid fa-boxes-stacked"></i></div>
+                <div class="title">Receive Items</div>
+                <div class="desc">Log received stock</div>
             </a>
-        </div>
-        <!-- User Management -->
-        <div class="col-md-3">
-            <a href="{{ url_for('user_list') }}" class="text-decoration-none">
-                <div class="card dashboard-card text-center p-4 h-100">
-                    <div class="dashboard-icon" style="color:#6f42c1;"><i class="fa-solid fa-users"></i></div>
-                    <h5 class="mb-2 text-dark">User Management</h5>
-                    <p class="text-muted mb-0">Manage system users</p>
-                </div>
+            <a href="{{ url_for('issue') }}" class="quick-card">
+                <div class="icon"><i class="fa-solid fa-box-open"></i></div>
+                <div class="title">Issue Items</div>
+                <div class="desc">Issue items to offices</div>
             </a>
-        </div>
-        <!-- Manage Head & Office Name -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-            <a href="{{ url_for('manage_head_office') }}" class="text-decoration-none">
-                <div class="card dashboard-card text-center p-4 h-100">
-                    <div class="dashboard-icon" style="color:#198754;"><i class="fa-solid fa-building-user"></i></div>
-                    <h5 class="mb-2">Manage Head & Office</h5>
-                    <p class="mb-0">Add, update or delete Head & Office Name</p>
-                </div>
+            <a href="{{ url_for('manage_head_office') }}" class="quick-card">
+                <div class="icon"><i class="fa-solid fa-building-user"></i></div>
+                <div class="title">Manage Head & Office</div>
+                <div class="desc">Add, update or delete Head & Office Name</div>
             </a>
-        </div>
-        <!-- Print Ledger -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-            <a href="{{ url_for('print_ledger') }}" class="text-decoration-none">
-                <div class="card dashboard-card text-center p-4 h-100">
-                    <div class="dashboard-icon" style="color:#0d6efd;"><i class="fa-solid fa-file-lines"></i></div>
-                    <h5 class="mb-2">Print Ledger</h5>
-                    <p class="mb-0">View & export complete ledger</p>
-                </div>
+            <a href="{{ url_for('print_ledger') }}" class="quick-card">
+                <div class="icon"><i class="fa-solid fa-file-lines"></i></div>
+                <div class="title">Print Ledger</div>
+                <div class="desc">View & export complete ledger</div>
             </a>
-        </div>
-        <!-- Transaction Report -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-            <a href="{{ url_for('report') }}" class="text-decoration-none">
-                <div class="card dashboard-card text-center p-4 h-100">
-                    <div class="dashboard-icon" style="color:#0d6efd;"><i class="fa-solid fa-file-lines"></i></div>
-                    <h5 class="mb-2">Transaction Report</h5>
-                    <p class="mb-0">View & export complete transaction report</p>
-                </div>
+            <a href="{{ url_for('report') }}" class="quick-card">
+                <div class="icon"><i class="fa-solid fa-file-lines"></i></div>
+                <div class="title">Transaction Report</div>
+                <div class="desc">View & export complete transaction report</div>
             </a>
-        </div>
-        <!-- Items Category -->
-        <div class="col-12 col-sm-6 col-md-4 col-lg-3 mb-3">
-            <a href="{{ url_for('items_category') }}" class="text-decoration-none">
-                <div class="card dashboard-card text-center p-4 h-100">
-                    <div class="dashboard-icon" style="color:#fd7e14;"><i class="fa-solid fa-tags"></i></div>
-                    <h5 class="mb-2">Items Category</h5>
-                    <p class="mb-0">Add or manage item categories</p>
-                </div>
+            <a href="{{ url_for('items_category') }}" class="quick-card">
+                <div class="icon"><i class="fa-solid fa-tags"></i></div>
+                <div class="title">Items Category</div>
+                <div class="desc">Add or manage item categories</div>
+            </a>
+            <a href="{{ url_for('renewal_voucher') }}" class="quick-card">
+                <div class="icon"><i class="fa-solid fa-file-invoice"></i></div>
+                <div class="title">Renewal Voucher</div>
+                <div class="desc">Generate renewal vouchers</div>
             </a>
         </div>
     </div>
-</div>
 </body>
 </html>
 
