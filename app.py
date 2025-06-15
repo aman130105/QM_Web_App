@@ -14,12 +14,21 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with a strong key
 
 # DB connection settings for PostgreSQL
-DB_CONFIG = {
-    'host': 'localhost',
-    'dbname': 'postgres',  # Use your actual database name
-    'user': 'postgres',    # Use your actual PostgreSQL username
-    'password': '12Marks@255'  # Your actual password
-}
+DATABASE_URL = os.environ.get('DATABASE_URL')
+if DATABASE_URL:
+    # Use DATABASE_URL if set (Render/cloud deployment)
+    def get_db_connection():
+        return psycopg2.connect(DATABASE_URL)
+else:
+    # Fallback to local config
+    DB_CONFIG = {
+        'host': 'localhost',
+        'dbname': 'postgres',  # Use your actual database name
+        'user': 'postgres',    # Use your actual PostgreSQL username
+        'password': '12Marks@255'  # Your actual password
+    }
+    def get_db_connection():
+        return psycopg2.connect(**DB_CONFIG)
 
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")

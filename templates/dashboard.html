@@ -179,7 +179,41 @@
                 <div class="desc">Generate renewal vouchers</div>
             </a>
         </div>
+        <ul class="list-unstyled d-flex justify-content-center mt-4">
+            <li>
+                <button class="exit-btn" type="button" onclick="exitApp();">
+                    <i class="fa-solid fa-door-closed"></i> Exit
+                </button>
+            </li>
+        </ul>
     </div>
+    <script>
+        function updateTime() {
+            var now = new Date();
+            var time = now.toLocaleTimeString('en-GB', { hour12: false });
+            var date = now.toLocaleDateString('en-GB');
+            var dateElem = document.getElementById('currentDate');
+            var timeElem = document.getElementById('currentTime');
+            if (dateElem) dateElem.textContent = date;
+            if (timeElem) timeElem.textContent = time;
+        }
+        setInterval(updateTime, 1000);
+        window.onload = updateTime;
+
+        function exitApp() {
+            // For mobile, just go back in history if possible, else do nothing
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Optionally, show a message or do nothing
+            }
+        }
+    </script>
+</body>
+</html>
+            }
+        }
+    </script>
 </body>
 </html>
 

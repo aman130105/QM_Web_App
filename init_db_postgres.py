@@ -12,15 +12,19 @@ def get_env_var(name, default=None, required=True):
     return value
 
 def init_db_postgres():
-    # Allow fallback to default values if environment variables are not set
-    conn = psycopg2.connect(
-        host=get_env_var('PGHOST', 'localhost', required=False),
-        # CHANGE THIS LINE: Use a real database name, not "Local PostgreSQL"
-        database=get_env_var('PGDATABASE', 'postgres', required=False),
-        user=get_env_var('PGUSER', 'postgres', required=False),
-        password=get_env_var('PGPASSWORD', '12Marks@255', required=False),
-        port=os.environ.get('PGPORT', '5432')
-    )
+    # Use DATABASE_URL if set, otherwise use individual env vars
+    database_url = os.environ.get('DATABASE_URL')
+    if database_url:
+        conn = psycopg2.connect(database_url)
+    else:
+        conn = psycopg2.connect(
+            host=get_env_var('PGHOST', 'localhost', required=False),
+            # CHANGE THIS LINE: Use a real database name, not "Local PostgreSQL"
+            database=get_env_var('PGDATABASE', 'postgres', required=False),
+            user=get_env_var('PGUSER', 'postgres', required=False),
+            password=get_env_var('PGPASSWORD', '12Marks@255', required=False),
+            port=os.environ.get('PGPORT', '5432')
+        )
     cur = conn.cursor()
 
     # Users Table
