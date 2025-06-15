@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add User</title>
+    <style>
+        body {
+            background: #f4f6fb;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+        }
+        .main-card {
+            max-width: 500px;
+            margin: 50px auto 0 auto;
+            background: #fff;
+            border-radius: 14px;
+            box-shadow: 0 4px 24px #0002;
+            padding: 32px 36px 36px 36px;
+            position: relative;
+        }
+        .back-button {
+            position: absolute;
+            top: 24px;
+            right: 32px;
+        }
+        .back-button button {
+            background: #e3e8f0;
+            color: #222;
+            border: none;
+            border-radius: 6px;
+            padding: 7px 18px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .back-button button:hover {
+            background: #cbd5e1;
+        }
+        h1 {
+            margin-top: 0;
+            font-size: 2em;
+            color: #2d3a4a;
+            letter-spacing: 1px;
+        }
+        .message {
+            background: #e7f4e4;
+            color: #256029;
+            border: 1px solid #b7e0b0;
+            padding: 12px 18px;
+            border-radius: 6px;
+            margin-bottom: 18px;
+            font-size: 1em;
+        }
+        .form-container {
+            margin: 24px 0 0 0;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .form-group label {
+            font-weight: 500;
+            color: #2d3a4a;
+            margin-bottom: 2px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .form-group input, .form-group select {
+            padding: 7px 12px;
+            border-radius: 6px;
+            border: 1px solid #bfc9d9;
+            font-size: 1em;
+            transition: border 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus {
+            border: 1.5px solid #2d8cf0;
+            outline: none;
+        }
+        .form-group .helper-text {
+            font-size: 0.95em;
+            color: #6b7280;
+            margin-left: 2px;
+        }
+        .form-container button[type="submit"] {
+            background: #2d8cf0;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 9px 22px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: background 0.2s;
+            margin-top: 10px;
+        }
+        .form-container button[type="submit"]:hover {
+            background: #1765ad;
+        }
+        @media (max-width: 600px) {
+            .main-card {
+                padding: 14px 4vw 18px 4vw;
+            }
+            .back-button {
+                top: 10px;
+                right: 10px;
+            }
+        }
+        .info-icon {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            background: #e3e8f0;
+            color: #2d8cf0;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 13px;
+            line-height: 16px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="main-card">
+        <div class="back-button">
+            <a href="{{ url_for('dashboard') }}">
+                <button type="button">Back to Dashboard</button>
+            </a>
+        </div>
+        <h1>Add User</h1>
+        {% if message %}
+            <div class="message">{{ message }}</div>
+        {% endif %}
+        <div class="form-container">
+            <form method="POST" action="{{ url_for('add_user') }}">
+                <div class="form-group">
+                    <label for="username">
+                        Username
+                        <span class="info-icon" title="Enter a unique username for the user.">i</span>
+                    </label>
+                    <input type="text" id="username" name="username" required>
+                    <span class="helper-text">This will be used for login.</span>
+                </div>
+                <div class="form-group">
+                    <label for="email">
+                        Email
+                        <span class="info-icon" title="Enter a valid email address.">i</span>
+                    </label>
+                    <input type="email" id="email" name="email" required>
+                    <span class="helper-text">We'll never share your email with anyone else.</span>
+                </div>
+                <div class="form-group">
+                    <label for="password">
+                        Password
+                        <span class="info-icon" title="Password should be at least 8 characters.">i</span>
+                    </label>
+                    <input type="password" id="password" name="password" required minlength="8">
+                    <span class="helper-text">Minimum 8 characters.</span>
+                </div>
+                <div class="form-group">
+                    <label for="role">
+                        Role
+                        <span class="info-icon" title="Select the user's role in the system.">i</span>
+                    </label>
+                    <select id="role" name="role" required>
+                        <option value="">Select Role</option>
+                        <option value="admin">Admin</option>
+                        <option value="manager">Manager</option>
+                        <option value="user">User</option>
+                    </select>
+                    <span class="helper-text">Assign appropriate permissions.</span>
+                </div>
+                <button type="submit">Add User</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

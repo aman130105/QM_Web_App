@@ -101,17 +101,32 @@ def receive():
         head = request.form['head']
         ledger_page_no = request.form['ledger_page_no']
         available_stock = request.form['available_stock']
-        qty = request.form['qty']
+        qty = int(request.form['qty'])  # Ensure qty is an integer
         price_unit = request.form['price_unit']
         remarks = request.form['remarks']
         date = request.form['date']
+
+        # Insert into received_items
         cur.execute("""INSERT INTO received_items 
             (category, item_name, head, ledger_page_no, available_stock, qty, price_unit, remarks, date)
             VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)""",
             (category, item_name, head, ledger_page_no, available_stock, qty, price_unit, remarks, date))
+
+        # Calculate previous balance for this item
+        cur.execute("SELECT COALESCE(SUM(receive_qty) - SUM(issue_qty), 0) as balance FROM ledger_entries WHERE item_name = %s", (item_name,))
+        prev_balance = cur.fetchone()['balance'] or 0
+
+        # Insert into ledger_entries
+        new_balance = prev_balance + qty
+        cur.execute("""INSERT INTO ledger_entries 
+            (item_name, date, type, receive_from, issue_to, prev_bal, receive_qty, issue_qty, balance, remark)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+            (item_name, date, 'Receive', head, None, prev_balance, qty, 0, new_balance, remarks))
+
         conn.commit()
         conn.close()
         return redirect(url_for('receive'))
+
     cur.execute("SELECT * FROM received_items ORDER BY id DESC")
     entries = cur.fetchall()
     entries = [dict(row) for row in entries]
@@ -142,22 +157,39 @@ def issue():
         issued_to = request.form['issued_to']
         date = request.form['date']
         remarks = request.form['remarks']
+
+        # Check available stock
         cur.execute("SELECT SUM(qty) as total_received FROM received_items WHERE category=%s AND item_name=%s", (category, item_name))
         received = cur.fetchone()['total_received'] or 0
         cur.execute("SELECT SUM(qty) as total_issued FROM issued_items WHERE category=%s AND item_name=%s", (category, item_name))
         issued = cur.fetchone()['total_issued'] or 0
         available = received - issued
+
         if qty > available:
             error = f"Issue quantity ({qty}) cannot be greater than available stock ({available})."
             form_data = request.form.to_dict()
         else:
+            # Insert into issued_items
             cur.execute(""" 
                 INSERT INTO issued_items (category, item_name, head, ledger_page_no, available_stock, qty, issued_to, date, remarks)
                 VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
             """, (category, item_name, head, ledger_page_no, available_stock, qty, issued_to, date, remarks))
+
+            # Calculate previous balance for this item
+            cur.execute("SELECT COALESCE(SUM(receive_qty) - SUM(issue_qty), 0) as balance FROM ledger_entries WHERE item_name = %s", (item_name,))
+            prev_balance = cur.fetchone()['balance'] or 0
+
+            # Insert into ledger_entries
+            new_balance = prev_balance - qty
+            cur.execute("""INSERT INTO ledger_entries 
+                (item_name, date, type, receive_from, issue_to, prev_bal, receive_qty, issue_qty, balance, remark)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
+                (item_name, date, 'Issue', None, issued_to, prev_balance, 0, qty, new_balance, remarks))
+
             conn.commit()
             message = "Entry added successfully."
             form_data = {}
+
     cur.execute("SELECT * FROM issued_items ORDER BY id DESC")
     entries = cur.fetchall()
     entries = [dict(row) for row in entries]
@@ -181,16 +213,19 @@ class UserManager:
     def get_all_users():
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT id, username FROM users")
+        cur.execute("SELECT id, username, name, cisf_no, rank, mobile FROM users")
         users = cur.fetchall()
         conn.close()
         return [dict(row) for row in users]
 
     @staticmethod
-    def add_user(username, password):
+    def add_user(username, password, name, cisf_no, rank, mobile):
         conn = get_db_connection()
         cur = conn.cursor()
-        cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
+        cur.execute(
+            "INSERT INTO users (username, password, name, cisf_no, rank, mobile) VALUES (%s, %s, %s, %s, %s, %s)",
+            (username, password, name, cisf_no, rank, mobile)
+        )
         conn.commit()
         conn.close()
 
@@ -202,31 +237,37 @@ class UserManager:
         conn.commit()
         conn.close()
 
-@app.route('/users')
-def user_list():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    users = UserManager.get_all_users()
-    return render_template('user_list.html', users=users)
-
 @app.route('/add_user', methods=['GET', 'POST'])
 def add_user():
     if 'user' not in session:
         return redirect(url_for('login'))
     message = None
+    error = None
     if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['password']
-        UserManager.add_user(username, password)
-        message = "User added successfully."
-    return render_template('add_user.html', message=message)
+        name = request.form.get('name')
+        cisf_no = request.form.get('cisf_no')
+        rank = request.form.get('rank')
+        mobile = request.form.get('mobile')
+        username = request.form.get('username')
+        password = request.form.get('password')
+        if not (name and cisf_no and rank and mobile and username and password):
+            error = "All fields are required."
+        else:
+            try:
+                UserManager.add_user(username, password, name, cisf_no, rank, mobile)
+                message = "User added successfully."
+            except Exception as e:
+                error = f"Error: {str(e)}"
+    return render_template('add_user.html', message=message, error=error)
 
-@app.route('/delete_user/<int:user_id>', methods=['POST'])
-def delete_user(user_id):
+@app.route('/user_list')
+def user_list():
     if 'user' not in session:
         return redirect(url_for('login'))
-    UserManager.delete_user(user_id)
-    return redirect(url_for('user_list'))
+    users = UserManager.get_all_users()
+    error = request.args.get('error')
+    message = request.args.get('message')
+    return render_template('user_list.html', users=users, error=error, message=message)
 
 @app.route('/ledger', methods=['GET', 'POST'])
 def ledger():
@@ -901,36 +942,63 @@ def get_items_by_category():
     items = Ledger.get_items_by_category(category)
     return jsonify({'items': items})
 
-@app.route('/print_ledger', methods=['GET', 'POST'])
+@app.route('/print_ledger')
 def print_ledger():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    try:
+    category = request.args.get('category')
+    item = request.args.get('item')
+    item_info = None
+    transactions = []
+    # Fetch categories, items, and items_by_category for treeview and dropdowns
+    categories = Ledger.get_categories()
+    items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
+    items = []
+    selected_item = item if item else ''
+    if category:
+        items = items_by_category.get(category, [])
+    else:
+        # If no category selected, flatten all items
+        for item_list in items_by_category.values():
+            items.extend(item_list)
+    if category and item:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        categories = Ledger.get_categories()
-        items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
-        items = get_all_items()
-        selected_item = request.args.get('item')
-        ledger_data = []
-        item_info = None
-        if selected_item:
-            cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (selected_item,))
-            ledger_data = [dict(row) for row in cur.fetchall()]
-            cur.execute("SELECT * FROM ledger WHERE item_name = %s", (selected_item,))
-            item_info = cur.fetchone()
+        # Ledger info
+        cur.execute("SELECT * FROM ledger WHERE category=%s AND item_name=%s", (category, item))
+        item_info = cur.fetchone()
+        # Transactions
+        cur.execute("SELECT * FROM ledger_entries WHERE item_name=%s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
+        transactions = cur.fetchall()
         conn.close()
-        return render_template(
-            'print_ledger.html',
-            categories=categories,
-            items_by_category=items_by_category,
-            items=items,
-            selected_item=selected_item,
-            ledger_data=ledger_data,
-            item_info=item_info
-        )
-    except Exception as e:
-        return f"An error occurred: {str(e)}", 500
+    return render_template(
+        'print_ledger.html',
+        item_info=item_info,
+        transactions=transactions,
+        categories=categories,
+        items=items,
+        items_by_category=items_by_category,
+        selected_item=selected_item
+    )
+
+@app.route('/print_ledger_print')
+def print_ledger_print():
+    category = request.args.get('category')
+    item = request.args.get('item')
+    item_info = None
+    transactions = []
+    if category and item:
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM ledger WHERE category=%s AND item_name=%s", (category, item))
+        item_info = cur.fetchone()
+        cur.execute("SELECT * FROM ledger_entries WHERE item_name=%s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
+        transactions = cur.fetchall()
+        conn.close()
+    return render_template(
+        'print_ledger_print.html',
+        item_info=item_info,
+        transactions=transactions,
+        entries=transactions  # <-- add this line
+    )
 
 @app.route('/export_ledger_pdf')
 def export_ledger_pdf():
@@ -946,9 +1014,13 @@ def export_ledger_pdf():
     cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
     rows = cur.fetchall()
     conn.close()
-    html = render_template('ledger_pdf_template.html', item_info=item_info, rows=rows)
+    rendered = render_template(
+        'print_ledger_pdf.html',
+        item_info=item_info,
+        transactions=rows
+    )
     import pdfkit
-    pdf = pdfkit.from_string(html, False)
+    pdf = pdfkit.from_string(rendered, False)
     return send_file(
         io.BytesIO(pdf),
         as_attachment=True,
