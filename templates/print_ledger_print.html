@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Ledger Print</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 13px;
+            margin: 0;
+            padding: 0;
+            background: #fff;
+        }
+        .container {
+            width: 92%;
+            margin: 32px auto 0 auto;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            margin-bottom: 18px;
+        }
+        .header-left, .header-right {
+            font-size: 1.12em;
+            line-height: 1.7;
+        }
+        .header-left {
+            text-align: left;
+            font-weight: 600;
+        }
+        .header-right {
+            text-align: right;
+            font-weight: 600;
+        }
+        .header-center {
+            flex: 0 0 auto;
+            text-align: center;
+            padding: 0 24px;
+        }
+        .header-center img {
+            display: block;
+            margin: 0 auto 4px auto;
+            height: 200px; /* increased from 70px to 200px */
+        }
+        .header-center img:first-child {
+            height: 200px; /* increased from 70px to 200px */
+        }
+        .header-center img:last-child {
+            height: 48px;
+            margin-top: 2px;
+        }
+        .title {
+            text-align: center;
+            font-size: 2.3em;
+            color: #d90429;
+            font-weight: bold;
+            margin: 28px 0 22px 0;
+            text-decoration: underline;
+            letter-spacing: 2.5px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 22px 0 12px 0;
+            font-size: 1.13em;
+        }
+        .info-row .left {
+            width: 60%;
+        }
+        .info-row .right {
+            width: 36%;
+            text-align: right;
+        }
+        .info-row strong {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 18px;
+            font-size: 1.04em;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #888;
+            padding: 8px 5px;
+            text-align: center;
+        }
+        th {
+            background: #e3eafc;
+            font-size: 1.07em;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        tbody tr:nth-child(even) {
+            background: #f7fafd;
+        }
+        .receive-row td {
+            color: #d90429;
+            font-weight: bold;
+        }
+        .signature {
+            margin-top: 64px;
+            text-align: right;
+            font-size: 1.18em;
+            font-weight: 500;
+        }
+        .signature p {
+            margin: 7px 0;
+        }
+        .signature p:first-child {
+            font-weight: bold;
+            font-size: 1.08em;
+        }
+        @media print {
+            body { background: #fff; }
+            .container { margin-top: 0; }
+        }
+    </style>
+    <script>
+        window.onload = function() { window.print(); }
+    </script>
+</head>
+<body>
+<div class="container">
+    <div style="display: flex; justify-content: flex-end; margin-top: 18px;">
+        <a href="{{ url_for('renewal_voucher') }}" style="background: #1976d2; color: #fff; padding: 8px 18px; border-radius: 5px; text-decoration: none; font-weight: bold; font-size: 1.08em;">
+            Renewal Voucher
+        </a>
+    </div>
+    <div class="header-row">
+        <div class="header-left">
+            <div><strong>Ph: 080-22001521</strong></div>
+            <div>Email: bangalore-apsu@cisf.gov.in</div>
+        </div>
+        <div class="header-center">
+            <img src="{{ url_for('static', filename='cisf_logo.png') }}" alt="CISF Logo">
+        </div>
+        <div class="header-right">
+            <div><strong>Office of the DIG/CASO</strong></div>
+            <div>CISF Unit ASG Bangalore</div>
+            <div>ISO 9001:2015 Certified</div>
+        </div>
+    </div>
+    <div class="title">LEDGER REPORT</div>
+    <div class="info-row">
+        <div class="left">
+            <div><strong>Item:</strong> {{ item_info.item_name if item_info else '' }}</div>
+            <div><strong>Description:</strong> {{ item_info.category if item_info else '' }}</div>
+        </div>
+        <div class="right">
+            <div><strong>Head:</strong> {{ item_info.head if item_info else '' }}</div>
+            <div><strong>Ledger Page No:</strong> {{ item_info.ledger_page_no if item_info else '' }}</div>
+        </div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Receive From</th>
+                <th>Issue To</th>
+                <th>Prev Bal</th>
+                <th>Receive</th>
+                <th>Issue</th>
+                <th>Balance</th>
+                <th>Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set data = entries if entries is defined else transactions if transactions is defined else [] %}
+            {% set sn = 1 %}
+            {% for t in data %}
+                <tr class="{% if t.type == 'Receive' %}receive-row{% endif %}">
+                    <td>{{ sn }}</td>
+                    <td>{{ t.date or '--' }}</td>
+                    <td>{{ t.type or '--' }}</td>
+                    <td>{{ t.receive_from or '-' }}</td>
+                    <td>{{ t.issue_to or '-' }}</td>
+                    <td>{{ t.prev_bal or 0 }}</td>
+                    <td>{{ t.receive_qty or '' }}</td>
+                    <td>{{ t.issue_qty or '' }}</td>
+                    <td>{{ t.balance or 0 }}</td>
+                    <td>{{ t.remark or '-' }}</td>
+                </tr>
+                {% set sn = sn + 1 %}
+            {% endfor %}
+            {% if sn == 1 %}
+                <tr>
+                    <td colspan="10">No transaction entries found for the selected item.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    <div class="signature">
+        <p>Signature:</p>
+        <p>Quarter Master</p>
+        <p>CISF UNIT ASG BANGALORE</p>
+    </div>
+</div>
+</body>
+</html>
+</body>
+</html>

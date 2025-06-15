@@ -213,17 +213,6 @@
             margin: 24px 0;
             font-size: 1.13em;
         }
-        .signature {
-            margin-top: 40px;
-            text-align: right;
-            max-width: 1000px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .signature p {
-            margin: 5px 0;
-            font-size: 1.08em;
-        }
         @media (max-width: 1100px) {
             .main-card { padding: 12px 2vw 18px 2vw; }
             table, th, td { font-size: 0.97em; }
@@ -240,6 +229,17 @@
             .actions, .form-section, .treeview, .main-card { display: none !important; }
             body { background: #fff; }
             table { page-break-inside: auto; }
+        }
+        .ledger-info-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 32px;
+            margin-bottom: 18px;
+        }
+        .ledger-info-row div {
+            flex: 1;
+            min-width: 220px;
+            font-size: 1.25em;
         }
     </style>
     <script>
@@ -279,9 +279,6 @@
 <body>
 <div class="main-card">
     <div class="header">
-        <p>Ph: 080-22001521 | Email: email@example.com</p>
-        <p>Office of the DIG/CASO, CISF Unit ASG Bangalore</p>
-        <p>ISO 9001:2015 Certified</p>
         <div class="title">LEDGER REPORT</div>
     </div>
     <div class="form-section">
@@ -305,102 +302,79 @@
             <button type="submit"><i class="fa fa-search"></i> Show Ledger</button>
         </form>
     </div>
-    <div class="flex-container">
-        <div class="treeview">
-            <h3><i class="fa fa-sitemap"></i> Ledger Treeview</h3>
-            <ul>
-                {% for cat in categories %}
-                    <li>
-                        <span style="color:#1765ad;font-weight:600;">{{ cat }}</span>
-                        <ul>
-                            {% for item in items_by_category[cat] %}
-                                <li>
-                                    <span class="tree-item{% if selected_item == item %} selected{% endif %}"
-                                          onclick="selectTreeItem('{{ cat }}','{{ item }}')">
-                                        <i class="fa fa-cube"></i> {{ item }}
-                                    </span>
-                                </li>
-                            {% endfor %}
-                        </ul>
-                    </li>
-                {% endfor %}
-            </ul>
+    {% if selected_item %}
+    <div class="ledger-info-row" style="display: flex; flex-wrap: wrap; gap: 32px; margin-bottom: 18px;">
+        <div style="flex:1; min-width:220px; font-size:1.25em;">
+            <strong>Category:</strong>
+            {% for cat in categories %}
+                {% if selected_item in items_by_category[cat] %}
+                    {{ cat }}
+                {% endif %}
+            {% endfor %}
         </div>
-        {% if selected_item %}
-        <div class="details">
-            <p><strong>Category:</strong>
-                {% for cat in categories %}
-                    {% if selected_item in items_by_category[cat] %}
-                        {{ cat }}
-                    {% endif %}
-                {% endfor %}
-            </p>
-            <p><strong>Description:</strong> {{ selected_item }}</p>
-            {% if item_info %}
-                <p><strong>Head:</strong> {{ item_info['head'] or '-' }}</p>
-                <p><strong>Ledger Page No:</strong> {{ item_info['ledger_page_no'] or '-' }}</p>
-            {% else %}
-                <p>No item information available.</p>
-            {% endif %}
+        <div style="flex:1; min-width:220px; font-size:1.25em;">
+            <strong>Name:</strong> {{ selected_item }}
         </div>
-        {% endif %}
+        <div style="flex:1; min-width:220px; font-size:1.25em;">
+            <strong>Head:</strong> {{ item_info['head'] or '-' if item_info else '-' }}
+        </div>
+        <div style="flex:1; min-width:220px; font-size:1.25em;">
+            <strong>Ledger Page No.:</strong> {{ item_info['ledger_page_no'] or '-' if item_info else '-' }}
+        </div>
     </div>
+    {% endif %}
     {% if selected_item %}
         <div class="transaction-table-container">
+            <div style="font-size:1.2em; font-weight:bold; text-align:center; margin-bottom:8px; color:#d90429; letter-spacing:1px;">
+                LEDGER REPORT
+            </div>
             <table>
                 <thead>
                     <tr>
                         <th>S.No</th>
                         <th>Date</th>
                         <th>Type</th>
-                        <th>Category</th>
-                        <th>Particulars</th>
-                        <th>Head</th>
-                        <th>L/P No.</th>
-                        <th>Previous</th>
-                        <th>Received</th>
+                        <th>Receive From</th>
+                        <th>Issue To</th>
+                        <th>Prev Bal</th>
+                        <th>Receive</th>
                         <th>Issue</th>
-                        <th>Office</th>
+                        <th>Balance</th>
                         <th>Remark</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% set sn = 1 %}
-                    {% for t in transactions if t.item == selected_item %}
+                    {% for t in transactions %}
                         <tr>
-                            <td>{{ sn }}</td>
-                            <td>{{ t.date if t.date else '--' }}</td>
-                            <td>{{ t.type if t.type else '--' }}</td>
-                            <td>{{ t.category if t.category else '--' }}</td>
-                            <td>{{ t.description if t.description else '--' }}</td>
-                            <td>{{ t.head if t.head else '--' }}</td>
-                            <td>{{ t.lp_no if t.lp_no else '--' }}</td>
-                            <td>{{ t.previous if t.previous else '--' }}</td>
-                            <td>{{ t.received if t.received else '--' }}</td>
-                            <td>{{ t.issued if t.issued else '--' }}</td>
-                            <td>{{ t.office if t.office else '--' }}</td>
-                            <td>{{ t.remark if t.remark else '--' }}</td>
+                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ sn }}</td>
+                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.date if t.date else '--' }}</td>
+                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.type if t.type else '--' }}</td>
+                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.receive_from if t.receive_from else '-' }}</td>
+                            <td>{{ t.issue_to if t.issue_to else '-' }}</td>
+                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.prev_bal if t.prev_bal is not none else 0 }}</td>
+                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.receive_qty if t.receive_qty else '' }}</td>
+                            <td>{{ t.issue_qty if t.issue_qty else '' }}</td>
+                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.balance if t.balance is not none else 0 }}</td>
+                            <td>{{ t.remark if t.remark else '-' }}</td>
                         </tr>
                         {% set sn = sn + 1 %}
                     {% endfor %}
                     {% if sn == 1 %}
                         <tr>
-                            <td colspan="12" class="no-data">No transaction entries found for the selected item.</td>
+                            <td colspan="10" class="no-data">No transaction entries found for the selected item.</td>
                         </tr>
                     {% endif %}
                 </tbody>
             </table>
         </div>
         <div class="actions">
+            <button type="button" class="print"
+                onclick="window.open('{{ url_for('print_ledger_print', category=request.args.get('category',''), item=selected_item) }}', '_blank');">
+                <i class="fa fa-print"></i> Print
+            </button>
             <a href="{{ url_for('export_ledger_excel', item=selected_item) }}"><i class="fa fa-file-excel"></i> Export Excel</a>
-            <button type="button" class="print" onclick="window.print()"><i class="fa fa-print"></i> Print</button>
             <a href="{{ url_for('dashboard') }}" class="back"><i class="fa fa-arrow-left"></i> Back</a>
-        </div>
-        <div class="signature">
-            <p>Signature:</p>
-            <p>___________________________</p>
-            <p>Quarter Master</p>
-            <p>CISF UNIT ASG BANGALORE</p>
         </div>
     {% endif %}
 </div>

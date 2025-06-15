@@ -20,4 +20,10 @@
 {% endfor %}
 </tbody></table>
 <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">Back</a>
+{% if message %}
+            <div class="message">{{ message }}</div>
+        {% endif %}
+        {% if error %}
+            <div class="message" style="background:#fdecea;color:#b91c1c;border:1px solid #fca5a5;">{{ error }}</div>
+        {% endif %}
 </div></body></html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Print Ledger Report</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%);
+            padding: 0;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+        .main-card {
+            background: #fff;
+            margin: 36px auto;
+            padding: 32px 36px;
+            border-radius: 16px;
+            max-width: 1100px;
+            box-shadow: 0 8px 32px #0002;
+        }
+        .header {
+            margin-bottom: 18px;
+            text-align: center;
+        }
+        .header p {
+            margin: 2px 0;
+            font-size: 1.03em;
+            color: #374151;
+        }
+        .header .title {
+            font-size: 2.1em;
+            font-weight: bold;
+            color: #d90429;
+            margin: 10px 0 0 0;
+            letter-spacing: 2px;
+            text-decoration: underline;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+        }
+        th, td {
+            border: 1px solid #e3e8f0;
+            padding: 10px 8px;
+            text-align: center;
+            font-size: 1.05em;
+        }
+        th {
+            background-color: #e3eafc;
+            font-weight: bold;
+            color: #1E1E27;
+        }
+        tr:nth-child(even) {
+            background: #f3f6fb;
+        }
+        tr:hover {
+            background: #e0e7ef;
+        }
+        @media (max-width: 1100px) {
+            .main-card { padding: 12px 2vw; }
+            table, th, td { font-size: 0.97em; }
+        }
+        @media (max-width: 700px) {
+            .main-card { padding: 6px 0; }
+            table, th, td { font-size: 0.85em; }
+        }
+        @media print {
+            .actions, .form-section, .treeview, .main-card { display: none !important; }
+            body { background: #fff; }
+            table { page-break-inside: auto; }
+        }
+    </style>
+</head>
+<body>
+<div class="main-card">
+    <div class="header">
+        <div class="title">LEDGER REPORT</div>
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Receive From</th>
+                <th>Issue To</th>
+                <th>Prev Bal</th>
+                <th>Receive</th>
+                <th>Issue</th>
+                <th>Balance</th>
+                <th>Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set sn = 1 %}
+            {% for t in transactions %}
+                <tr>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ sn }}</td>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.date or '--' }}</td>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.type or '--' }}</td>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.receive_from or '-' }}</td>
+                    <td>{{ t.issue_to or '-' }}</td>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.prev_bal if t.prev_bal is not none else 0 }}</td>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.receive_qty or '' }}</td>
+                    <td>{{ t.issue_qty or '' }}</td>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.balance if t.balance is not none else 0 }}</td>
+                    <td>{{ t.remark or '-' }}</td>
+                </tr>
+                {% set sn = sn + 1 %}
+            {% endfor %}
+            {% if sn == 1 %}
+                <tr>
+                    <td colspan="10">No transaction entries found for the selected item.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
