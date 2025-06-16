@@ -8,7 +8,9 @@ import openpyxl
 from psycopg2.extras import RealDictCursor
 import pdfkit
 import shutil
+import psycopg2
 import os
+from flask import Flask
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with a strong key
@@ -23,8 +25,8 @@ else:
     # Fallback to local config
     DB_CONFIG = {
         'host': 'localhost',
-        'dbname': 'postgres',  # Use your actual database name
-        'user': 'postgres',    # Use your actual PostgreSQL username
+        'dbname': 'postgres',  # Your actual database name
+        'user': 'postgres',    # Your actual PostgreSQL username
         'password': '12Marks@255'  # Your actual password
     }
     def get_db_connection():
@@ -33,7 +35,7 @@ else:
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
 if WKHTMLTOPDF_PATH is None:
-    WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"  # adjust if needed
+    WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"  # for local use
 
 pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
