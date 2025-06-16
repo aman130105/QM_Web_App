@@ -39,10 +39,6 @@ if WKHTMLTOPDF_PATH is None:
 
 pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
-# Database helper
-def get_db_connection():
-    conn = psycopg2.connect(**DB_CONFIG)
-    return conn
 
 # Helper for dict-like row access
 def fetchall_dict(cur):
