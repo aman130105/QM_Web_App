@@ -106,12 +106,13 @@ def register():
 # Dashboard Page
 @app.route('/dashboard')
 def dashboard():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    return render_template('dashboard.html', username=session['user'])
+    user = {
+        "name": "Siddharth",
+    }
+    return render_template('dashboard.html', user=user)
 
 # Logout
-@app.route('/logout')
+@app.route('/logout', methods=['POST'])
 def logout():
     session.clear()
     return redirect(url_for('login'))

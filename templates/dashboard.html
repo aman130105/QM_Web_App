@@ -32,6 +32,9 @@
             background: #181a22;
             padding: 10px 30px;
             border-bottom: 2px solid #ffd600;
+            border-top: 2px solid #ffd600;
+            width: 100%;
+            box-sizing: border-box;
         }
         .title-bar .left {
             font-weight: bold;
@@ -39,33 +42,47 @@
             color: #ffd600;
             display: flex;
             align-items: center;
+            flex: 0 0 auto;
         }
         .title-bar .center {
-            flex: 1;
-            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex: 1 1 auto;
             font-size: 1.5rem;
             color: #fff;
             font-weight: 500;
             letter-spacing: 1px;
+            gap: 18px;
         }
         .title-bar .center span {
-            margin-left: 20px;
+            margin-left: 0;
             font-size: 1.1rem;
             color: #ffd600;
             font-weight: 400;
         }
+        .title-bar .date-time {
+            color: #fefefd;
+            font-size: 1.1rem;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            margin-left: 18px;
+        }
         .title-bar .right {
             display: flex;
             align-items: center;
+            flex: 0 0 auto;
+            margin-left: 18px;
         }
         .logout-btn {
             background: transparent;
             border: 1.5px solid #ffd600;
-            color: #ffd600;
+            color: #ff0000;
             padding: 6px 18px;
             border-radius: 5px;
             font-size: 1rem;
-            margin-left: 15px;
             cursor: pointer;
             transition: background 0.2s, color 0.2s;
         }
@@ -124,6 +141,22 @@
             font-size: 1rem;
             color: #e0e0e0;
         }
+        @media (max-width: 900px) {
+            .title-bar {
+                flex-direction: column;
+                align-items: stretch;
+                padding: 10px 8px;
+            }
+            .title-bar .center {
+                font-size: 1.1rem;
+                flex-direction: column;
+                gap: 6px;
+            }
+            .title-bar .right {
+                margin-left: 0;
+                justify-content: flex-end;
+            }
+        }
         @media (max-width: 700px) {
             .dashboard-title { font-size: 1.3rem; }
             .title-bar .center { font-size: 1.1rem; }
@@ -133,13 +166,17 @@
     <!-- Optionally include FontAwesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script>
-        // Live clock update
+        // Live clock and date update
         function updateTime() {
             const now = new Date();
             let h = now.getHours().toString().padStart(2, '0');
             let m = now.getMinutes().toString().padStart(2, '0');
             let s = now.getSeconds().toString().padStart(2, '0');
+            let day = now.getDate().toString().padStart(2, '0');
+            let month = (now.getMonth() + 1).toString().padStart(2, '0');
+            let year = now.getFullYear();
             document.getElementById('live-time').textContent = h + ':' + m + ':' + s;
+            document.getElementById('live-date').textContent = day + '-' + month + '-' + year;
         }
         setInterval(updateTime, 1000);
         window.onload = updateTime;
@@ -151,15 +188,25 @@
     </div>
     <div class="title-bar">
         <div class="left">
-            <i class="fa-solid fa-warehouse"></i> CISF QM Dashboard
+            <i class="fa-solid fa-warehouse"></i>
+            <span style="margin-left:8px;">Quarter Master: Dashboard</span>
         </div>
         <div class="center">
-            Welcome {{ username }}
-            <span id="live-time">{{ current_time }}</span>
+            <span>Welcome to:</span>
+            <span style="color:#ffd600;">{{ user.name }}</span>
+            <div class="date-time">
+                <span id="live-date"></span>
+                <span id="live-time"></span>
+            </div>
         </div>
         <div class="right">
-            Welcome, {{ username }}
-            <a href="{{ url_for('logout') }}"><button class="logout-btn">Logout</button></a>
+            <form action="{{ url_for('logout') }}" method="post" style="margin:0;">
+                {# If using Flask-WTF/CSRF protection, include the token: #}
+                {% if csrf_token %}
+                    {{ csrf_token() }}
+                {% endif %}
+                <button type="submit" class="logout-btn">Logout</button>
+            </form>
         </div>
     </div>
     <div class="dashboard-container">
@@ -207,8 +254,6 @@
             </a>
         </div>
     </div>
-</body>
-</html>
 </body>
 </html>
 
