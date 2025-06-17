@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # init_db_postgres.py
 
 import os
@@ -124,5 +123,4 @@ if __name__ == "__main__":
     init_db_postgres()
 
 # This file is correct and ready for use on Render or locally.
-=======
->>>>>>> 8ebec880b45e95c97dfa18cb47d10e3aabff587a
+# This file is correct and ready for use on Render or locally.
