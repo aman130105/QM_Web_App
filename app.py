@@ -1,10 +1,9 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
 import psycopg2
 import psycopg2.extras
 from datetime import datetime
 import io
-from flask import send_file
 import openpyxl
 from psycopg2.extras import RealDictCursor
 import pdfkit
@@ -36,11 +35,6 @@ if WKHTMLTOPDF_PATH is None:
     WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"  # adjust if needed
 
 pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
-
-# Database helper
-def get_db_connection():
-    conn = psycopg2.connect(**DB_CONFIG)
-    return conn
 
 # Helper for dict-like row access
 def fetchall_dict(cur):
