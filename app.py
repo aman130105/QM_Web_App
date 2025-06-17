@@ -1,3 +1,4 @@
+import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import psycopg2
 import psycopg2.extras
@@ -8,7 +9,6 @@ import openpyxl
 from psycopg2.extras import RealDictCursor
 import pdfkit
 import shutil
-import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with a strong key
