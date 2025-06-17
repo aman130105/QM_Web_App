@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Update Issue Entry</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            color: #fff;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 40px auto 0 auto;
+            padding: 0 20px;
+        }
+        .card {
+            background: rgba(30, 32, 40, 0.98);
+            border-radius: 18px;
+            box-shadow: 0 6px 24px 0 rgba(0,0,0,0.18);
+            padding: 32px 22px 28px 22px;
+            margin-bottom: 32px;
+        }
+        h2 {
+            text-align: center;
+            color: #ffd600;
+            margin-bottom: 25px;
+            letter-spacing: 1px;
+        }
+        form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 18px 24px;
+        }
+        label {
+            font-weight: 500;
+            color: #ffd600;
+            margin-bottom: 4px;
+            display: block;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px 10px;
+            border-radius: 6px;
+            border: 1px solid #ffd600;
+            background: #232526;
+            color: #fff;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            box-sizing: border-box;
+        }
+        input[type="date"] {
+            color-scheme: dark;
+        }
+        textarea {
+            min-height: 36px;
+            resize: vertical;
+        }
+        .form-actions {
+            grid-column: 1 / -1;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .submit-btn, .back-btn {
+            background: #ffd600;
+            color: #232526;
+            border: none;
+            padding: 10px 32px;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.18s, color 0.18s;
+            margin-right: 10px;
+        }
+        .submit-btn:hover, .back-btn:hover {
+            background: #fff;
+            color: #232526;
+        }
+        @media (max-width: 700px) {
+            .card { padding: 18px 6px 14px 6px; }
+            form { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h2>Update Issue Entry</h2>
+            <form method="post">
+                <div>
+                    <label for="category">Category</label>
+                    <input type="text" name="category" id="category" value="{{ entry.category }}" required>
+                </div>
+                <div>
+                    <label for="item_name">Item Name</label>
+                    <input type="text" name="item_name" id="item_name" value="{{ entry.item_name }}" required>
+                </div>
+                <div>
+                    <label for="qty">Quantity</label>
+                    <input type="number" name="qty" id="qty" min="1" value="{{ entry.qty }}" required>
+                </div>
+                <div>
+                    <label for="issued_to">Issued To (Office)</label>
+                    <select name="issued_to" id="issued_to" required>
+                        <option value="">Select Office</option>
+                        {% for office in offices %}
+                            <option value="{{ office.office_name }}" {% if entry.issued_to == office.office_name %}selected{% endif %}>{{ office.office_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div>
+                    <label for="date">Date</label>
+                    <input type="date" name="date" id="date" value="{{ entry.date }}" required>
+                </div>
+                <div>
+                    <label for="remarks">Remarks</label>
+                    <textarea name="remarks" id="remarks">{{ entry.remarks }}</textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn">Update Entry</button>
+                    <a href="{{ url_for('issue') }}"><button type="button" class="back-btn">Back</button></a>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

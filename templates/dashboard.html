@@ -2,210 +2,213 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard - CISF QM</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <title>CISF QM Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body {
-            background: linear-gradient(135deg, #23272f 0%, #181c24 100%);
-            min-height: 100vh;
-            color: #f1f1f1;
+            margin: 0;
             font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #232526 0%, #414345 100%);
+            color: #fff;
+            min-height: 100vh;
         }
-        .header-dark {
-            background: #181c24;
-            color: #ffe600;
-            padding: 32px 0 18px 0;
+        .header {
+            background: #11131a;
+            padding: 30px 0 10px 0;
             text-align: center;
-            font-size: 2.3em;
-            font-weight: 700;
-            letter-spacing: 1.5px;
-            border-bottom: 4px solid #ffe600;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.13);
+            border-bottom: 3px solid #ffd600;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: #ffd600;
+            letter-spacing: 1px;
+        }
+        .title-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #181a22;
+            padding: 10px 30px;
+            border-bottom: 2px solid #ffd600;
+        }
+        .title-bar .left {
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: #ffd600;
+            display: flex;
+            align-items: center;
+        }
+        .title-bar .center {
+            flex: 1;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #fff;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        .title-bar .center span {
+            margin-left: 20px;
+            font-size: 1.1rem;
+            color: #ffd600;
+            font-weight: 400;
+        }
+        .title-bar .right {
+            display: flex;
+            align-items: center;
+        }
+        .logout-btn {
+            background: transparent;
+            border: 1.5px solid #ffd600;
+            color: #ffd600;
+            padding: 6px 18px;
+            border-radius: 5px;
+            font-size: 1rem;
+            margin-left: 15px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .logout-btn:hover {
+            background: #ffd600;
+            color: #181a22;
+        }
+        .dashboard-container {
+            max-width: 1100px;
+            margin: 40px auto 0 auto;
+            padding: 0 20px;
         }
         .dashboard-title {
-            font-size: 2.1em;
-            font-weight: 700;
-            color: #ffe600;
-            margin: 36px 0 18px 0;
             text-align: center;
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #ffd600;
+            margin-bottom: 35px;
             letter-spacing: 1px;
         }
-        .dashboard-subtitle {
-            text-align: center;
-            font-size: 1.2em;
-            color: #bbb;
-            margin-bottom: 32px;
-        }
-        .quick-menu {
-            margin: 0 auto;
-            margin-top: 18px;
-            display: flex;
-            flex-wrap: wrap;
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 32px;
-            justify-content: center;
-            width: 95%;
-            max-width: 1200px;
         }
-        .quick-card {
-            background: #23272f;
-            border-radius: 14px;
-            box-shadow: 0 2px 16px rgba(0,0,0,0.18);
-            width: 260px;
-            min-height: 180px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-decoration: none;
-            color: #ffe600;
-            transition: box-shadow 0.18s, background 0.18s, color 0.18s, border 0.18s;
-            padding: 32px 0 22px 0;
-            border: 2px solid #23272f;
+        .dashboard-card {
+            background: rgba(30, 32, 40, 0.98);
+            border-radius: 18px;
+            box-shadow: 0 6px 24px 0 rgba(0,0,0,0.18);
+            padding: 38px 22px 28px 22px;
+            text-align: center;
+            transition: transform 0.18s, box-shadow 0.18s, background 0.18s;
+            cursor: pointer;
+            border: 1.5px solid transparent;
             position: relative;
         }
-        .quick-card:hover {
-            background: #181c24;
-            box-shadow: 0 4px 18px rgba(0,0,0,0.22);
-            color: #fff;
-            border-color: #ffe600;
+        .dashboard-card:hover {
+            transform: translateY(-7px) scale(1.03);
+            box-shadow: 0 12px 32px 0 rgba(255,214,0,0.13), 0 2px 8px 0 rgba(0,0,0,0.10);
+            border: 1.5px solid #ffd600;
+            background: rgba(40, 42, 55, 1);
         }
-        .quick-card .icon {
-            font-size: 2.8em;
-            margin-bottom: 16px;
-            color: #ffe600;
+        .dashboard-card i, .dashboard-card .icon {
+            font-size: 2.8rem;
+            color: #ffd600;
+            margin-bottom: 18px;
+            display: block;
         }
-        .quick-card .title {
-            font-size: 1.25em;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #ffe600;
-        }
-        .quick-card .desc {
-            font-size: 1.08em;
-            color: #eee;
-            text-align: center;
-        }
-        .navbar-dark {
-            background: #23272f !important;
-            border-bottom: 2px solid #ffe600;
-        }
-        .navbar-brand {
+        .dashboard-card-title {
+            font-size: 1.25rem;
             font-weight: bold;
-            letter-spacing: 1px;
-            font-size: 1.35rem;
-            color: #ffe600 !important;
+            color: #ffd600;
+            margin-bottom: 7px;
         }
-        .navbar-text, .btn-light {
-            color: #ffe600 !important;
+        .dashboard-card-desc {
+            font-size: 1rem;
+            color: #e0e0e0;
         }
-        .btn-light {
-            background: #23272f !important;
-            border: 1px solid #ffe600 !important;
-        }
-        .btn-light:hover {
-            background: #ffe600 !important;
-            color: #23272f !important;
-        }
-        @media (max-width: 1100px) {
-            .quick-menu { width: 98%; }
-        }
-        @media (max-width: 900px) {
-            .header-dark { font-size: 1.3em; }
-            .quick-card { width: 180px; min-height: 120px; }
-        }
-        @media (max-width: 600px) {
-            .quick-menu { gap: 12px; }
-            .header-dark { font-size: 1.1em; padding: 18px 0 10px 0; }
-            .dashboard-title { font-size: 1.2em; }
-            .quick-card { width: 98vw; min-height: 90px; }
+        @media (max-width: 700px) {
+            .dashboard-title { font-size: 1.3rem; }
+            .title-bar .center { font-size: 1.1rem; }
+            .dashboard-card { padding: 24px 10px 18px 10px; }
         }
     </style>
-</head>
-<body>
-    <div class="header-dark">
-        Quarter Master, CISF Unit ASG Bangalore
-    </div>
-    <nav class="navbar navbar-expand-lg navbar-dark navbar-dark">
-        <div class="container">
-            <span class="navbar-brand"><i class="fa-solid fa-warehouse me-2"></i>CISF QM Dashboard</span>
-            <div class="d-flex">
-                <span class="navbar-text me-3">Welcome, {{ username }}</span>
-                <a href="{{ url_for('logout') }}" class="btn btn-light btn-sm">Logout</a>
-            </div>
-        </div>
-    </nav>
-    <div class="container mt-5">
-        <h1 class="dashboard-title">Dashboard</h1>
-        <div class="quick-menu">
-            <a href="{{ url_for('ledger') }}" class="quick-card">
-                <div class="icon"><i class="fa-solid fa-book"></i></div>
-                <div class="title">Create Ledger</div>
-                <div class="desc">Add new ledger entries</div>
-            </a>
-            <a href="{{ url_for('receive') }}" class="quick-card">
-                <div class="icon"><i class="fa-solid fa-boxes-stacked"></i></div>
-                <div class="title">Receive Items</div>
-                <div class="desc">Log received stock</div>
-            </a>
-            <a href="{{ url_for('issue') }}" class="quick-card">
-                <div class="icon"><i class="fa-solid fa-box-open"></i></div>
-                <div class="title">Issue Items</div>
-                <div class="desc">Issue items to offices</div>
-            </a>
-            <a href="{{ url_for('manage_head_office') }}" class="quick-card">
-                <div class="icon"><i class="fa-solid fa-building-user"></i></div>
-                <div class="title">Manage Head & Office</div>
-                <div class="desc">Add, update or delete Head & Office Name</div>
-            </a>
-            <a href="{{ url_for('print_ledger') }}" class="quick-card">
-                <div class="icon"><i class="fa-solid fa-file-lines"></i></div>
-                <div class="title">Print Ledger</div>
-                <div class="desc">View & export complete ledger</div>
-            </a>
-            <a href="{{ url_for('report') }}" class="quick-card">
-                <div class="icon"><i class="fa-solid fa-file-lines"></i></div>
-                <div class="title">Transaction Report</div>
-                <div class="desc">View & export complete transaction report</div>
-            </a>
-            <a href="{{ url_for('items_category') }}" class="quick-card">
-                <div class="icon"><i class="fa-solid fa-tags"></i></div>
-                <div class="title">Items Category</div>
-                <div class="desc">Add or manage item categories</div>
-            </a>
-            <a href="{{ url_for('renewal_voucher') }}" class="quick-card">
-                <div class="icon"><i class="fa-solid fa-file-invoice"></i></div>
-                <div class="title">Renewal Voucher</div>
-                <div class="desc">Generate renewal vouchers</div>
-            </a>
-        </div>
+    <!-- Optionally include FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
     <script>
+        // Live clock update
         function updateTime() {
-            var now = new Date();
-            var time = now.toLocaleTimeString('en-GB', { hour12: false });
-            var date = now.toLocaleDateString('en-GB');
-            var dateElem = document.getElementById('currentDate');
-            var timeElem = document.getElementById('currentTime');
-            if (dateElem) dateElem.textContent = date;
-            if (timeElem) timeElem.textContent = time;
+            const now = new Date();
+            let h = now.getHours().toString().padStart(2, '0');
+            let m = now.getMinutes().toString().padStart(2, '0');
+            let s = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('live-time').textContent = h + ':' + m + ':' + s;
         }
         setInterval(updateTime, 1000);
         window.onload = updateTime;
-
-        function exitApp() {
-            // For mobile, just go back in history if possible, else do nothing
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                // Optionally, show a message or do nothing
-            }
-        }
     </script>
+</head>
+<body>
+    <div class="header">
+        <h1>Quarter Master, CISF Unit ASG Bangalore</h1>
+    </div>
+    <div class="title-bar">
+        <div class="left">
+            <i class="fa-solid fa-warehouse"></i> CISF QM Dashboard
+        </div>
+        <div class="center">
+            Welcome {{ username }}
+            <span id="live-time">{{ current_time }}</span>
+        </div>
+        <div class="right">
+            Welcome, {{ username }}
+            <a href="{{ url_for('logout') }}"><button class="logout-btn">Logout</button></a>
+        </div>
+    </div>
+    <div class="dashboard-container">
+        <div class="dashboard-title">Dashboard</div>
+        <div class="card-grid">
+            <a href="{{ url_for('ledger') }}" class="dashboard-card">
+                <i class="fa-solid fa-book"></i>
+                <div class="dashboard-card-title">Create Ledger</div>
+                <div class="dashboard-card-desc">Add new ledger entries</div>
+            </a>
+            <a href="{{ url_for('receive') }}" class="dashboard-card">
+                <i class="fa-solid fa-boxes-stacked"></i>
+                <div class="dashboard-card-title">Receive Items</div>
+                <div class="dashboard-card-desc">Log received stock</div>
+            </a>
+            <a href="{{ url_for('issue') }}" class="dashboard-card">
+                <i class="fa-solid fa-dolly"></i>
+                <div class="dashboard-card-title">Issue Items</div>
+                <div class="dashboard-card-desc">Issue items to offices</div>
+            </a>
+            <a href="{{ url_for('manage_head_office') }}" class="dashboard-card">
+                <i class="fa-solid fa-building-user"></i>
+                <div class="dashboard-card-title">Manage Head &amp; Office</div>
+                <div class="dashboard-card-desc">Add, update or delete Head &amp; Office Name</div>
+            </a>
+            <a href="{{ url_for('print_ledger') }}" class="dashboard-card">
+                <i class="fa-solid fa-print"></i>
+                <div class="dashboard-card-title">Print Ledger</div>
+                <div class="dashboard-card-desc">View &amp; export complete ledger</div>
+            </a>
+            <a href="{{ url_for('report') }}" class="dashboard-card">
+                <i class="fa-solid fa-file-lines"></i>
+                <div class="dashboard-card-title">Transaction Report</div>
+                <div class="dashboard-card-desc">View &amp; export complete transaction report</div>
+            </a>
+            <a href="{{ url_for('items_category') }}" class="dashboard-card">
+                <i class="fa-solid fa-tags"></i>
+                <div class="dashboard-card-title">Items Category</div>
+                <div class="dashboard-card-desc">Add or manage item categories</div>
+            </a>
+            <a href="{{ url_for('renewal_voucher') }}" class="dashboard-card">
+                <i class="fa-solid fa-file-invoice"></i>
+                <div class="dashboard-card-title">Renewal Voucher</div>
+                <div class="dashboard-card-desc">Generate renewal vouchers</div>
+            </a>
+        </div>
+    </div>
 </body>
 </html>
-            }
-        }
-    </script>
 </body>
 </html>
 

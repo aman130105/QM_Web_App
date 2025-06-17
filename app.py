@@ -535,7 +535,7 @@ def delete_ledger(id):
 @app.route('/update_receive/<int:id>', methods=['GET', 'POST'])
 def update_receive(id):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     if request.method == 'POST':
         category = request.form['category']
         item_name = request.form['item_name']
@@ -555,8 +555,11 @@ def update_receive(id):
         return redirect(url_for('receive'))
     cur.execute("SELECT * FROM received_items WHERE id=%s", (id,))
     entry = cur.fetchone()
+    # Get all heads for dropdown
+    cur.execute("SELECT head FROM head_office WHERE head IS NOT NULL AND head != '' ORDER BY head")
+    heads = [row['head'] for row in cur.fetchall()]
     conn.close()
-    return render_template('update_receive.html', entry=entry)
+    return render_template('update_receive.html', entry=entry, heads=heads)
 
 @app.route('/delete_receive/<int:id>', methods=['POST'])
 def delete_receive(id):
@@ -570,7 +573,7 @@ def delete_receive(id):
 @app.route('/update_issue/<int:id>', methods=['GET', 'POST'])
 def update_issue(id):
     conn = get_db_connection()
-    cur = conn.cursor()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     if request.method == 'POST':
         category = request.form['category']
         item_name = request.form['item_name']
@@ -587,8 +590,10 @@ def update_issue(id):
         return redirect(url_for('issue'))
     cur.execute("SELECT * FROM issued_items WHERE id=%s", (id,))
     entry = cur.fetchone()
+    # Get all offices for dropdown
+    offices = HeadOfficeManager.get_all_offices()
     conn.close()
-    return render_template('update_issue.html', entry=entry)
+    return render_template('update_issue.html', entry=entry, offices=offices)
 
 @app.route('/delete_issue/<int:id>', methods=['POST'])
 def delete_issue(id):
