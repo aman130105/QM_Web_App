@@ -8,26 +8,40 @@ import openpyxl
 from psycopg2.extras import RealDictCursor
 import pdfkit
 import shutil
+from urllib.parse import urlparse
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Replace with a strong key
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use environment variable for production
 
-# DB connection settings for PostgreSQL
-DATABASE_URL = os.environ.get('DATABASE_URL')
-if DATABASE_URL:
-    # Use DATABASE_URL if set (Render/cloud deployment)
-    def get_db_connection():
-        return psycopg2.connect(DATABASE_URL)
-else:
-    # Fallback to local config
-    DB_CONFIG = {
-        'host': 'localhost',
-        'dbname': 'postgres',  # Your actual database name
-        'user': 'postgres',    # Your actual PostgreSQL username
-        'password': '12Marks@255'  # Your actual password
-    }
-    def get_db_connection():
-        return psycopg2.connect(**DB_CONFIG)
+# Database connection setup
+def get_db_connection():
+    # Parse DATABASE_URL for Render deployment
+    database_url = os.environ.get('DATABASE_URL')
+    
+    if database_url:
+        # Handle Render's PostgreSQL URL format
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        
+        # Parse the database URL
+        result = urlparse(database_url)
+        conn = psycopg2.connect(
+            dbname=result.path[1:],
+            user=result.username,
+            password=result.password,
+            host=result.hostname,
+            port=result.port,
+            sslmode='require'  # Important for Render PostgreSQL
+        )
+        return conn
+    else:
+        # Fallback to local config (for development)
+        return psycopg2.connect(
+            host='localhost',
+            dbname='postgres',
+            user='postgres',
+            password='12Marks@255'
+        )
 
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
