@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Confirm Delete</title>
+</head>
+<body>
+    <audio id="alertSound" autoplay>
+        <source src="{{ url_for('static', filename='alert.mp3') }}" type="audio/mpeg">
+    </audio>
+    <h2 style="color:red;">{{ warning_msg }}</h2>
+    <p>
+        You are about to delete: <strong>{{ entry.head or entry.office_name }}</strong>
+    </p>
+    <form method="post">
+        <button type="submit" name="confirm" value="yes" style="color:white;background:red;">Yes, Delete</button>
+        <button type="submit" name="confirm" value="no">Cancel</button>
+    </form>
+    <script>
+        // Play sound on page load
+        document.getElementById('alertSound').play();
+    </script>
+</body>
+</html>

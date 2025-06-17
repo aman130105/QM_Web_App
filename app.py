@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file, flash
 import psycopg2
 import psycopg2.extras
 from datetime import datetime
@@ -694,19 +694,61 @@ def update_head_office(id):
     if request.method == 'POST':
         head = request.form['head']
         office_name = request.form['office_name']
-        HeadOfficeManager.update(id, head, office_name)
-        return redirect(url_for('manage_head_office'))
+        # Show warning before update (for demonstration, you can adjust logic as needed)
+        if request.form.get('confirm') == 'yes':
+            HeadOfficeManager.update(id, head, office_name)
+            conn.close()
+            flash("Head/Office updated.", "success")
+            return redirect(url_for('manage_head_office'))
+        elif request.form.get('confirm') == 'no':
+            conn.close()
+            flash("Update cancelled.", "info")
+            return redirect(url_for('manage_head_office'))
+        # Show confirmation page
+        entry = HeadOfficeManager.get_by_id(id)
+        warning_msg = (
+            "⚠️ Selected Head or Office se related sabhi data update ho sakte hain. "
+            "Are you sure you want to proceed?"
+        )
+        conn.close()
+        return render_template(
+            'confirm_update_head_office.html',
+            entry=entry,
+            warning_msg=warning_msg,
+            play_sound=True
+        )
     cur.execute("SELECT * FROM head_office WHERE id=%s", (id,))
     entry = cur.fetchone()
     conn.close()
     return render_template('update_head_office.html', entry=entry)
 
-@app.route('/delete_head_office/<int:id>', methods=['POST'])
+@app.route('/delete_head_office/<int:id>', methods=['GET', 'POST'])
 def delete_head_office(id):
     if 'user' not in session:
         return redirect(url_for('login'))
-    HeadOfficeManager.delete(id)
-    return redirect(url_for('manage_head_office'))
+    entry = HeadOfficeManager.get_by_id(id)
+    if not entry:
+        flash("Head/Office not found.", "error")
+        return redirect(url_for('manage_head_office'))
+    if request.method == 'POST':
+        confirm = request.form.get('confirm')
+        if confirm == 'yes':
+            HeadOfficeManager.delete(id)
+            flash("Head/Office and all related data deleted.", "success")
+            return redirect(url_for('manage_head_office'))
+        else:
+            flash("Deletion cancelled.", "info")
+            return redirect(url_for('manage_head_office'))
+    warning_msg = (
+        "⚠️ Selected Head or Office se related sabhi data delete ho jayenge. "
+        "Are you sure you want to proceed?"
+    )
+    return render_template(
+        'confirm_delete_head_office.html',
+        entry=entry,
+        warning_msg=warning_msg,
+        play_sound=True
+    )
 
 @app.route('/report')
 def report():

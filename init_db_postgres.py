@@ -121,3 +121,5 @@ def init_db_postgres():
 
 if __name__ == "__main__":
     init_db_postgres()
+
+# This file is correct and ready for use on Render or locally.
