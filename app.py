@@ -1,76 +1,5 @@
-<<<<<<< HEAD
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
-=======
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file
-import psycopg2
-import psycopg2.extras
-from datetime import datetime
-import io
-import openpyxl
-import pdfkit
-import shutil
-import os
-
-from psycopg2.extras import RealDictCursor
-
-app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # 🔒 Replace with a strong secret
-
-# ===================== 🔗 DATABASE CONNECTION =====================
-DATABASE_URL = os.environ.get('DATABASE_URL')
-
-def get_db_connection():
-    if DATABASE_URL:
-        return psycopg2.connect(DATABASE_URL)
-    else:
-        DB_CONFIG = {
-            'host': 'localhost',
-            'dbname': 'postgres',
-            'user': 'postgres',
-            'password': 'your_local_password'  # replace as needed
-        }
-        return psycopg2.connect(**DB_CONFIG)
-
-# ===================== 📄 PDFKIT CONFIGURATION =====================
-WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
-if WKHTMLTOPDF_PATH is None:
-    WKHTMLTOPDF_PATH = r"C:\Program Files\wkhtmltopdf\bin\wkhtmltopdf.exe"  # adjust if Windows
-pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
-
-# ===================== 🧪 TRY TO CREATE TABLES =====================
-def create_ledger_table():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS ledger (
-            id SERIAL PRIMARY KEY,
-            category TEXT NOT NULL,
-            item_name TEXT NOT NULL,
-            head TEXT,
-            ledger_page_no TEXT,
-            opening_date TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-# और इसी तरह बाकी table creation functions भी नीचे लिखे रहें...
-
-# ===================== 🟢 STARTUP TABLE SETUP =====================
-if __name__ == '__main__':
-    try:
-        create_ledger_table()
-        # Add your other table creation functions here safely:
-        # create_received_items_table()
-        # create_ledger_entries_table()
-        # create_items_category_table()
-        # create_head_office_table()
-    except Exception as e:
-        print("⚠️ Error creating tables:", e)
-    
-    app.run(debug=True)from flask import Flask, render_template, request, redirect, url_for, session, jsonify
->>>>>>> 0b6e129da332b04ffc4a7cc9ff9eed8944fbe7dd
 import psycopg2
 import psycopg2.extras
 from datetime import datetime
@@ -79,12 +8,6 @@ import openpyxl
 from psycopg2.extras import RealDictCursor
 import pdfkit
 import shutil
-<<<<<<< HEAD
-=======
-import psycopg2
-import os
-from flask import Flask
->>>>>>> 0b6e129da332b04ffc4a7cc9ff9eed8944fbe7dd
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'  # Replace with a strong key
@@ -113,10 +36,6 @@ if WKHTMLTOPDF_PATH is None:
 
 pdfkit_config = pdfkit.configuration(wkhtmltopdf=WKHTMLTOPDF_PATH)
 
-<<<<<<< HEAD
-=======
-
->>>>>>> 0b6e129da332b04ffc4a7cc9ff9eed8944fbe7dd
 # Helper for dict-like row access
 def fetchall_dict(cur):
     return cur.fetchall()
