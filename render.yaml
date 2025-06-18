@@ -1,15 +1,11 @@
 services:
   - type: web
-    name: qm-web-app
+    name: QM-Inventory-Management
     env: python
+    plan: free
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: DATABASE_URL
-        fromDatabase:
-          name: qm-db
-          property: connectionString
+        value: <YOUR_DATABASE_URL>
 
-databases:
-  - name: qm-db
-    plan: free
