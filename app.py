@@ -1,5 +1,6 @@
 import os
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify, send_file, flash
+from dotenv import load_dotenv
 import psycopg2
 import psycopg2.extras
 from datetime import datetime
@@ -10,8 +11,10 @@ import pdfkit
 import shutil
 from urllib.parse import urlparse
 
+load_dotenv()  # Load variables from .env
+
 app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use environment variable for production
+app.secret_key = os.environ.get('SECRET_KEY', 'fallback-secret')
 
 # Database connection setup
 def get_db_connection():
