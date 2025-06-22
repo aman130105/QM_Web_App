@@ -71,15 +71,20 @@ def login():
         password = request.form['password']
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
-        user = cur.fetchone()
+        try:
+            cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
+            user = cur.fetchone()
+        except Exception as e:
+            error = f"Database error: {e}"
+            user = None
         conn.close()
         if user:
             session['user'] = username
             session['role'] = user.get('role', 'user')
             return redirect(url_for('dashboard'))
         else:
-            error = 'Invalid Username or Password'
+            if not error:
+                error = 'Invalid Username or Password'
     return render_template('login.html', error=error)
 
 # Registration Page (add role selection, default to 'user')
@@ -510,11 +515,15 @@ def create_users_table():
             name TEXT,
             cisf_no TEXT,
             rank TEXT,
-            mobile TEXT,
-            role TEXT DEFAULT 'user'
+            mobile TEXT
         )
     """)
-    conn.commit()
+    # Add role column if it does not exist
+    try:
+        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';")
+        conn.commit()
+    except Exception as e:
+        print("Error adding role column:", e)
     conn.close()
 
 @app.route('/update_ledger/<int:id>', methods=['GET', 'POST'])
