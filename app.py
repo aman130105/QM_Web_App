@@ -15,33 +15,30 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use env
 
 # Database connection setup
 def get_db_connection():
-    # Parse DATABASE_URL for Render deployment
     database_url = os.environ.get('DATABASE_URL')
+    if not database_url:
+        raise ValueError("DATABASE_URL environment variable not set")
     
-    if database_url:
-        # Handle Render's PostgreSQL URL format
-        if database_url.startswith("postgres://"):
-            database_url = database_url.replace("postgres://", "postgresql://", 1)
-        
-        # Parse the database URL
-        result = urlparse(database_url)
+    # Handle Render's PostgreSQL URL format
+    if database_url.startswith("postgres://"):
+        database_url = database_url.replace("postgres://", "postgresql://", 1)
+    
+    # Parse the database URL
+    result = urlparse(database_url)
+    try:
         conn = psycopg2.connect(
             dbname=result.path[1:],
             user=result.username,
             password=result.password,
             host=result.hostname,
             port=result.port,
-            sslmode='require'  # Important for Render PostgreSQL
+            sslmode='require'
         )
+        print(f"Database connection successful to {result.hostname}:{result.port}")
         return conn
-    else:
-        # Fallback to local config (for development)
-        return psycopg2.connect(
-            host='localhost',
-            dbname='postgres',
-            user='postgres',
-            password='12Marks@255'
-        )
+    except Exception as e:
+        print(f"Database connection error: {e}")
+        raise
 
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
@@ -69,22 +66,21 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         try:
+            conn = get_db_connection()
+            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
             cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
             user = cur.fetchone()
+            conn.close()
+            if user:
+                session['user'] = username
+                session['role'] = user.get('role', 'user')
+                return redirect(url_for('dashboard'))
+            else:
+                error = 'Invalid Username or Password'
         except Exception as e:
             error = f"Database error: {e}"
-            user = None
-        conn.close()
-        if user:
-            session['user'] = username
-            session['role'] = user.get('role', 'user')
-            return redirect(url_for('dashboard'))
-        else:
-            if not error:
-                error = 'Invalid Username or Password'
+            print(f"Login error: {e}")
     return render_template('login.html', error=error)
 
 # Registration Page (add role selection, default to 'user')
@@ -105,9 +101,8 @@ def register():
             cur = conn.cursor()
             cur.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)", (username, password, role))
             conn.commit()
-            conn.close()
-            return redirect(url_for('login'))
         conn.close()
+        return redirect(url_for('login'))
     return render_template('register.html', error=error)
 
 # Dashboard Page
@@ -743,7 +738,7 @@ def update_head_office(id):
         # Show confirmation page
         entry = HeadOfficeManager.get_by_id(id)
         warning_msg = (
-            "⚠️ Selected Head or Office se related sabhi data update ho sakte hain. "
+            "âš ï¸� Selected Head or Office se related sabhi data update ho sakte hain. "
             "Are you sure you want to proceed?"
         )
         conn.close()
@@ -776,7 +771,7 @@ def delete_head_office(id):
             flash("Deletion cancelled.", "info")
             return redirect(url_for('manage_head_office'))
     warning_msg = (
-        "⚠️ Selected Head or Office se related sabhi data delete ho jayenge. "
+        "âš ï¸� Selected Head or Office se related sabhi data delete ho jayenge. "
         "Are you sure you want to proceed?"
     )
     return render_template(
@@ -1103,7 +1098,7 @@ def print_ledger_print():
         'print_ledger_print.html',
         item_info=item_info,
         transactions=transactions,
-        entries=transactions  # <-- add this line
+        entries=transactions
     )
 
 @app.route('/export_ledger_pdf')
