@@ -817,7 +817,7 @@ def report():
     offices = [row['issued_to'] for row in cur.fetchall()]
     items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
 
-    # Calculate totals from filtered transactions
+    # Calculate totals from filtered transactions (fix: use only filtered transactions)
     total_received = sum(t.get('received', 0) or 0 for t in transactions if t.get('type') == 'Receive')
     total_issued = sum(t.get('issued', 0) or 0 for t in transactions if t.get('type') == 'Issue')
     total_balance = total_received - total_issued
