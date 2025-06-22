@@ -15,39 +15,33 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use env
 
 # Database connection setup
 def get_db_connection():
+    # Parse DATABASE_URL for Render deployment
     database_url = os.environ.get('DATABASE_URL')
+    
     if database_url:
+        # Handle Render's PostgreSQL URL format
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
+        
+        # Parse the database URL
         result = urlparse(database_url)
-        try:
-            conn = psycopg2.connect(
-                dbname=result.path[1:],
-                user=result.username,
-                password=result.password,
-                host=result.hostname,
-                port=result.port,
-                sslmode='require'
-            )
-            print(f"Database connection successful to {result.hostname}:{result.port}")
-            return conn
-        except Exception as e:
-            print(f"Database connection error (Render/Cloud): {e}")
-            raise
+        conn = psycopg2.connect(
+            dbname=result.path[1:],
+            user=result.username,
+            password=result.password,
+            host=result.hostname,
+            port=result.port,
+            sslmode='require'  # Important for Render PostgreSQL
+        )
+        return conn
     else:
-        # Fallback for local development only
-        try:
-            conn = psycopg2.connect(
-                host='localhost',
-                dbname='postgres',
-                user='postgres',
-                password='12Marks@255'
-            )
-            print("Database connection successful to localhost")
-            return conn
-        except Exception as e:
-            print(f"Database connection error (Localhost): {e}")
-            raise
+        # Fallback to local config (for development)
+        return psycopg2.connect(
+            host='localhost',
+            dbname='postgres',
+            user='postgres',
+            password='12Marks@255'
+        )
 
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
@@ -75,21 +69,17 @@ def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        try:
-            conn = get_db_connection()
-            cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-            cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
-            user = cur.fetchone()
-            conn.close()
-            if user:
-                session['user'] = username
-                session['role'] = user.get('role', 'user')
-                return redirect(url_for('dashboard'))
-            else:
-                error = 'Invalid Username or Password'
-        except Exception as e:
-            error = f"Database error: {e}"
-            print(f"Login error: {e}")
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM users WHERE username=%s AND password=%s", (username, password))
+        user = cur.fetchone()
+        conn.close()
+        if user:
+            session['user'] = username
+            session['role'] = user.get('role', 'user')
+            return redirect(url_for('dashboard'))
+        else:
+            error = 'Invalid Username or Password'
     return render_template('login.html', error=error)
 
 # Registration Page (add role selection, default to 'user')
@@ -110,8 +100,9 @@ def register():
             cur = conn.cursor()
             cur.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)", (username, password, role))
             conn.commit()
+            conn.close()
+            return redirect(url_for('login'))
         conn.close()
-        return redirect(url_for('login'))
     return render_template('register.html', error=error)
 
 # Dashboard Page
@@ -519,15 +510,11 @@ def create_users_table():
             name TEXT,
             cisf_no TEXT,
             rank TEXT,
-            mobile TEXT
+            mobile TEXT,
+            role TEXT DEFAULT 'user'
         )
     """)
-    # Add role column if it does not exist
-    try:
-        cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS role TEXT DEFAULT 'user';")
-        conn.commit()
-    except Exception as e:
-        print("Error adding role column:", e)
+    conn.commit()
     conn.close()
 
 @app.route('/update_ledger/<int:id>', methods=['GET', 'POST'])
@@ -747,7 +734,7 @@ def update_head_office(id):
         # Show confirmation page
         entry = HeadOfficeManager.get_by_id(id)
         warning_msg = (
-            "âš ï¸� Selected Head or Office se related sabhi data update ho sakte hain. "
+            "⚠️ Selected Head or Office se related sabhi data update ho sakte hain. "
             "Are you sure you want to proceed?"
         )
         conn.close()
@@ -780,7 +767,7 @@ def delete_head_office(id):
             flash("Deletion cancelled.", "info")
             return redirect(url_for('manage_head_office'))
     warning_msg = (
-        "âš ï¸� Selected Head or Office se related sabhi data delete ho jayenge. "
+        "⚠️ Selected Head or Office se related sabhi data delete ho jayenge. "
         "Are you sure you want to proceed?"
     )
     return render_template(
@@ -1107,7 +1094,7 @@ def print_ledger_print():
         'print_ledger_print.html',
         item_info=item_info,
         transactions=transactions,
-        entries=transactions
+        entries=transactions  # <-- add this line
     )
 
 @app.route('/export_ledger_pdf')
