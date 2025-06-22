@@ -16,16 +16,10 @@ app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use env
 # Database connection setup
 def get_db_connection():
     database_url = os.environ.get('DATABASE_URL')
-    if not database_url:
-        raise ValueError("DATABASE_URL environment variable not set")
-    
-    # Handle Render's PostgreSQL URL format
-    if database_url.startswith("postgres://"):
-        database_url = database_url.replace("postgres://", "postgresql://", 1)
-    
-    # Parse the database URL
-    result = urlparse(database_url)
-    try:
+    if database_url:
+        if database_url.startswith("postgres://"):
+            database_url = database_url.replace("postgres://", "postgresql://", 1)
+        result = urlparse(database_url)
         conn = psycopg2.connect(
             dbname=result.path[1:],
             user=result.username,
@@ -34,11 +28,15 @@ def get_db_connection():
             port=result.port,
             sslmode='require'
         )
-        print(f"Database connection successful to {result.hostname}:{result.port}")
         return conn
-    except Exception as e:
-        print(f"Database connection error: {e}")
-        raise
+    else:
+        # Fallback for local development only
+        return psycopg2.connect(
+            host='localhost',
+            dbname='postgres',
+            user='postgres',
+            password='12Marks@255'
+        )
 
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
