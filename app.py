@@ -20,23 +20,34 @@ def get_db_connection():
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
         result = urlparse(database_url)
-        conn = psycopg2.connect(
-            dbname=result.path[1:],
-            user=result.username,
-            password=result.password,
-            host=result.hostname,
-            port=result.port,
-            sslmode='require'
-        )
-        return conn
+        try:
+            conn = psycopg2.connect(
+                dbname=result.path[1:],
+                user=result.username,
+                password=result.password,
+                host=result.hostname,
+                port=result.port,
+                sslmode='require'
+            )
+            print(f"Database connection successful to {result.hostname}:{result.port}")
+            return conn
+        except Exception as e:
+            print(f"Database connection error (Render/Cloud): {e}")
+            raise
     else:
         # Fallback for local development only
-        return psycopg2.connect(
-            host='localhost',
-            dbname='postgres',
-            user='postgres',
-            password='12Marks@255'
-        )
+        try:
+            conn = psycopg2.connect(
+                host='localhost',
+                dbname='postgres',
+                user='postgres',
+                password='12Marks@255'
+            )
+            print("Database connection successful to localhost")
+            return conn
+        except Exception as e:
+            print(f"Database connection error (Localhost): {e}")
+            raise
 
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
