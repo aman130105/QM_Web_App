@@ -27,7 +27,8 @@
             margin-bottom: 6px;
             display: block;
         }
-        .register-form input {
+        .register-form input,
+        .register-form select {
             width: 100%;
             padding: 12px 14px;
             margin-bottom: 18px;
@@ -39,7 +40,8 @@
             transition: border 0.18s, box-shadow 0.18s;
             box-sizing: border-box;
         }
-        .register-form input:focus {
+        .register-form input:focus,
+        .register-form select:focus {
             border: 1.5px solid #ffe600;
             outline: none;
             box-shadow: 0 0 0 2px #ffe60033;
@@ -165,10 +167,16 @@
         <label for="confirm_password"><i class="fa-solid fa-lock"></i> Confirm Password</label>
         <input type="password" name="confirm_password" id="confirm_password" required autocomplete="new-password" placeholder="Re-enter password">
 
+        <input type="hidden" name="role" value="admin">
+
         <div class="register-actions">
             <button type="submit" class="register-btn"><i class="fa-solid fa-user-plus"></i> Register</button>
             <a href="{{ url_for('login') }}" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Back</a>
         </div>
+    </form>
+</div>
+</body>
+</html>
     </form>
 </div>
 </body>

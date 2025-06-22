@@ -254,6 +254,9 @@
             </a>
         </div>
     </div>
+    {% if session['role'] == 'admin' %}
+        <!-- Show edit/delete buttons/links here -->
+    {% endif %}
 </body>
 </html>
 

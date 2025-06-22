@@ -76,18 +76,20 @@ def login():
         conn.close()
         if user:
             session['user'] = username
+            session['role'] = user.get('role', 'user')
             return redirect(url_for('dashboard'))
         else:
             error = 'Invalid Username or Password'
     return render_template('login.html', error=error)
 
-# Registration Page
+# Registration Page (add role selection, default to 'user')
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     error = None
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
+        role = request.form.get('role', 'user')
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM users WHERE username=%s", (username,))
@@ -96,7 +98,7 @@ def register():
             error = "Username already exists."
         else:
             cur = conn.cursor()
-            cur.execute("INSERT INTO users (username, password) VALUES (%s, %s)", (username, password))
+            cur.execute("INSERT INTO users (username, password, role) VALUES (%s, %s, %s)", (username, password, role))
             conn.commit()
             conn.close()
             return redirect(url_for('login'))
@@ -491,6 +493,25 @@ def create_items_category_table():
         CREATE TABLE IF NOT EXISTS items_category (
             id SERIAL PRIMARY KEY,
             category_name TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+# Update user table creation to include role
+def create_users_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            name TEXT,
+            cisf_no TEXT,
+            rank TEXT,
+            mobile TEXT,
+            role TEXT DEFAULT 'user'
         )
     """)
     conn.commit()
@@ -1295,6 +1316,7 @@ def add_renewal_voucher():
     return render_template('add_renewal_voucher.html', message=message, error=error, offices=offices)
 
 if __name__ == '__main__':
+    create_users_table()
     create_ledger_table()
     create_received_items_table()
     create_items_category_table()
