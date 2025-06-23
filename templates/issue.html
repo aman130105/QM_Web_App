@@ -74,6 +74,7 @@
         }
 
         document.addEventListener('DOMContentLoaded', function() {
+            updateDescriptionOptions();
             document.getElementById('item_name').addEventListener('change', function() {
                 var category = document.getElementById('category').value;
                 var item_name = this.value;
@@ -241,8 +242,7 @@
 <div id="voucher-print-area" style="display:none;"></div>
 <script>
 function printVoucher(issueId) {
-    // Find the entry data in the table row (or fetch via AJAX if needed)
-    const entry = JSON.parse('{{ entries|tojson|safe }}');
+    const entry = {{ entries|tojson|safe }};
     const data = entry.find(e => e.id == issueId);
 
     if (!data) {

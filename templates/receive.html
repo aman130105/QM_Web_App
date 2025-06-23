@@ -57,41 +57,44 @@
         }
     </style>
     <script>
-    function updateDescriptionOptions() {
+function updateDescriptionOptions() {
+    var category = document.getElementById('category').value;
+    var descSelect = document.getElementById('item_name');
+    var options = {{ items_by_category|tojson|safe }};
+    descSelect.innerHTML = '<option value="">Select Description</option>';
+    if (options[category]) {
+        options[category].forEach(function(item) {
+            descSelect.innerHTML += '<option value="' + item + '">' + item + '</option>';
+        });
+    }
+    // Clear autofill fields
+    document.getElementsByName('head')[0].value = '';
+    document.getElementsByName('ledger_page_no')[0].value = '';
+    document.getElementsByName('available_stock')[0].value = '';
+}
+
+// On page load, set dropdowns if editing/updating
+document.addEventListener('DOMContentLoaded', function() {
+    updateDescriptionOptions();
+    // If you want to pre-select item_name (for update), add logic here
+    document.getElementById('item_name').addEventListener('change', function() {
         var category = document.getElementById('category').value;
-        var descSelect = document.getElementById('item_name');
-        var options = JSON.parse('{{ items_by_category|tojson|safe }}');
-        descSelect.innerHTML = '<option value="">Select Description</option>';
-        if (options[category]) {
-            options[category].forEach(function(item) {
-                descSelect.innerHTML += '<option value="' + item + '">' + item + '</option>';
+        var item_name = this.value;
+        if (category && item_name) {
+            fetch('/get_ledger_info', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+                body: 'category=' + encodeURIComponent(category) + '&item_name=' + encodeURIComponent(item_name)
+            })
+            .then(response => response.json())
+            .then(data => {
+                document.getElementsByName('head')[0].value = data.head || '';
+                document.getElementsByName('ledger_page_no')[0].value = data.ledger_page_no || '';
+                document.getElementsByName('available_stock')[0].value = data.available_stock || '';
             });
         }
-        // Clear autofill fields
-        document.getElementsByName('head')[0].value = '';
-        document.getElementsByName('ledger_page_no')[0].value = '';
-        document.getElementsByName('available_stock')[0].value = '';
-    }
-
-    document.addEventListener('DOMContentLoaded', function() {
-        document.getElementById('item_name').addEventListener('change', function() {
-            var category = document.getElementById('category').value;
-            var item_name = this.value;
-            if (category && item_name) {
-                fetch('/get_ledger_info', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-                    body: 'category=' + encodeURIComponent(category) + '&item_name=' + encodeURIComponent(item_name)
-                })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementsByName('head')[0].value = data.head || '';
-                    document.getElementsByName('ledger_page_no')[0].value = data.ledger_page_no || '';
-                    document.getElementsByName('available_stock')[0].value = data.available_stock || '';
-                });
-            }
-        });
     });
+});
     </script>
 </head>
 <body>
@@ -220,7 +223,7 @@
 <div id="voucher-print-area" style="display:none;"></div>
 <script>
 function printReceiveVoucher(receiveId) {
-    const entriesData = JSON.parse('{{ entries|tojson|safe }}');
+    const entriesData = {{ entries|tojson|safe }};
     const data = entriesData.find(e => e.id == receiveId);
 
     if (!data) {

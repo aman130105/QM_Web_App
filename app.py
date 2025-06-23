@@ -10,14 +10,19 @@ import pdfkit
 import shutil
 from urllib.parse import urlparse
 
-# --- Database connection setup (move this to the top) ---
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use environment variable for production
+
+# Database connection setup
 def get_db_connection():
     # Parse DATABASE_URL for Render deployment
     database_url = os.environ.get('DATABASE_URL')
+    
     if database_url:
         # Handle Render's PostgreSQL URL format
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
+        
         # Parse the database URL
         result = urlparse(database_url)
         conn = psycopg2.connect(
@@ -37,144 +42,6 @@ def get_db_connection():
             user='postgres',
             password='12Marks@255'
         )
-
-# --- Table creation functions (must be defined after get_db_connection) ---
-def create_users_table():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id SERIAL PRIMARY KEY,
-            username TEXT UNIQUE NOT NULL,
-            password TEXT NOT NULL,
-            name TEXT,
-            cisf_no TEXT,
-            rank TEXT,
-            mobile TEXT,
-            role TEXT DEFAULT 'user'
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def create_ledger_table():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS ledger (
-            id SERIAL PRIMARY KEY,
-            category TEXT NOT NULL,
-            item_name TEXT NOT NULL,
-            head TEXT,
-            ledger_page_no TEXT,
-            opening_date TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def create_received_items_table():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS received_items (
-            id SERIAL PRIMARY KEY,
-            category TEXT NOT NULL,
-            item_name TEXT NOT NULL,
-            head TEXT,
-            ledger_page_no TEXT,
-            available_stock TEXT,
-            qty INTEGER,
-            price_unit TEXT,
-            remarks TEXT,
-            date TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def create_items_category_table():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS items_category (
-            id SERIAL PRIMARY KEY,
-            category_name TEXT NOT NULL
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def create_head_office_table():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS head_office (
-            id SERIAL PRIMARY KEY,
-            head TEXT,
-            office_name TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def create_ledger_entries_table():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS ledger_entries (
-            id SERIAL PRIMARY KEY,
-            item_name TEXT,
-            date TEXT,
-            type TEXT,
-            receive_from TEXT,
-            issue_to TEXT,
-            prev_bal INTEGER,
-            receive_qty INTEGER,
-            issue_qty INTEGER,
-            balance INTEGER,
-            remark TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-def create_renewal_voucher_table():
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS renewal_voucher (
-            id SERIAL PRIMARY KEY,
-            item_name TEXT NOT NULL,
-            quantity INTEGER NOT NULL,
-            date TEXT NOT NULL,
-            remarks TEXT,
-            head TEXT,
-            lp_no TEXT,
-            office TEXT
-        )
-    """)
-    cur.execute("ALTER TABLE renewal_voucher ADD COLUMN IF NOT EXISTS office TEXT;")
-    conn.commit()
-    conn.close()
-# --- end table creation functions ---
-
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use environment variable for production
-
-
-# --- Ensure all tables exist at startup ---
-def ensure_tables():
-    create_users_table()
-    create_ledger_table()
-    create_received_items_table()
-    create_items_category_table()
-    create_head_office_table()
-    create_ledger_entries_table()
-    create_renewal_voucher_table()
-
-ensure_tables()
-# --- end ensure tables ---
 
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
@@ -241,18 +108,9 @@ def register():
 # Dashboard Page
 @app.route('/dashboard')
 def dashboard():
-    if 'user' not in session:
-        return redirect(url_for('login'))
-    username = session['user']
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    cur.execute("SELECT * FROM users WHERE username=%s", (username,))
-    user = cur.fetchone()
-    conn.close()
-    if not user:
-        # If user not found in DB, force logout
-        session.clear()
-        return redirect(url_for('login'))
+    user = {
+        "name": "Siddharth",
+    }
     return render_template('dashboard.html', user=user)
 
 # Logout
@@ -302,13 +160,8 @@ def receive():
     cur.execute("SELECT * FROM received_items ORDER BY id DESC")
     entries = cur.fetchall()
     entries = [dict(row) for row in entries]
-    # Defensive: If ledger is empty, categories/items_by_category should not fail
-    try:
-        categories = Ledger.get_categories()
-        items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
-    except Exception:
-        categories = []
-        items_by_category = {}
+    categories = Ledger.get_categories()
+    items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
     conn.close()
     return render_template(
         'receive.html',
@@ -981,9 +834,8 @@ def report():
     items = [row['item_name'] for row in cur.fetchall()]
     cur.execute("SELECT DISTINCT head FROM ledger")
     heads = [row['head'] for row in cur.fetchall()]
-    # Always use office names from head_office for dropdown
-    cur.execute("SELECT office_name FROM head_office WHERE office_name IS NOT NULL AND office_name != ''")
-    offices = [row['office_name'] for row in cur.fetchall()]
+    cur.execute("SELECT DISTINCT issued_to FROM issued_items")
+    offices = [row['issued_to'] for row in cur.fetchall()]
     items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
 
     # Calculate totals from filtered transactions (fix: use only filtered transactions)
@@ -1005,6 +857,70 @@ def report():
         total_balance=total_balance,
         now=datetime.now
     )
+
+class HeadOfficeManager:
+    @staticmethod
+    def get_all():
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM head_office")
+        rows = cur.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def get_all_heads():
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT id, head FROM head_office WHERE head != ''")
+        rows = cur.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def get_all_offices():
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT id, office_name FROM head_office WHERE office_name != ''")
+        rows = cur.fetchall()
+        conn.close()
+        return [dict(row) for row in rows]
+
+    @staticmethod
+    def add(head, office_name):
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("INSERT INTO head_office (head, office_name) VALUES (%s, %s)", (head, office_name))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def update(id, head, office_name):
+        conn = get_db_connection()
+        cur = conn.cursor()
+        if head:
+            cur.execute("UPDATE head_office SET head=%s WHERE id=%s", (head, id))
+        elif office_name:
+            cur.execute("UPDATE head_office SET office_name=%s WHERE id=%s", (office_name, id))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def delete(id):
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM head_office WHERE id=%s", (id,))
+        conn.commit()
+        conn.close()
+
+    @staticmethod
+    def get_by_id(id):
+        conn = get_db_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute("SELECT * FROM head_office WHERE id=%s", (id,))
+        row = cur.fetchone()
+        conn.close()
+        return dict(row) if row else None
 
 @app.route('/export_excel')
 def export_excel():
@@ -1400,5 +1316,12 @@ def add_renewal_voucher():
     return render_template('add_renewal_voucher.html', message=message, error=error, offices=offices)
 
 if __name__ == '__main__':
+    create_users_table()
+    create_ledger_table()
+    create_received_items_table()
+    create_items_category_table()
+    create_head_office_table()
+    create_ledger_entries_table()
+    create_renewal_voucher_table()
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
