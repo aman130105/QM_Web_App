@@ -10,19 +10,14 @@ import pdfkit
 import shutil
 from urllib.parse import urlparse
 
-app = Flask(__name__)
-app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use environment variable for production
-
-# Database connection setup
+# --- Database connection setup (move this to the top) ---
 def get_db_connection():
     # Parse DATABASE_URL for Render deployment
     database_url = os.environ.get('DATABASE_URL')
-    
     if database_url:
         # Handle Render's PostgreSQL URL format
         if database_url.startswith("postgres://"):
             database_url = database_url.replace("postgres://", "postgresql://", 1)
-        
         # Parse the database URL
         result = urlparse(database_url)
         conn = psycopg2.connect(
@@ -42,6 +37,144 @@ def get_db_connection():
             user='postgres',
             password='12Marks@255'
         )
+
+# --- Table creation functions (must be defined after get_db_connection) ---
+def create_users_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id SERIAL PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            password TEXT NOT NULL,
+            name TEXT,
+            cisf_no TEXT,
+            rank TEXT,
+            mobile TEXT,
+            role TEXT DEFAULT 'user'
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def create_ledger_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS ledger (
+            id SERIAL PRIMARY KEY,
+            category TEXT NOT NULL,
+            item_name TEXT NOT NULL,
+            head TEXT,
+            ledger_page_no TEXT,
+            opening_date TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def create_received_items_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS received_items (
+            id SERIAL PRIMARY KEY,
+            category TEXT NOT NULL,
+            item_name TEXT NOT NULL,
+            head TEXT,
+            ledger_page_no TEXT,
+            available_stock TEXT,
+            qty INTEGER,
+            price_unit TEXT,
+            remarks TEXT,
+            date TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def create_items_category_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS items_category (
+            id SERIAL PRIMARY KEY,
+            category_name TEXT NOT NULL
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def create_head_office_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS head_office (
+            id SERIAL PRIMARY KEY,
+            head TEXT,
+            office_name TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def create_ledger_entries_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS ledger_entries (
+            id SERIAL PRIMARY KEY,
+            item_name TEXT,
+            date TEXT,
+            type TEXT,
+            receive_from TEXT,
+            issue_to TEXT,
+            prev_bal INTEGER,
+            receive_qty INTEGER,
+            issue_qty INTEGER,
+            balance INTEGER,
+            remark TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+def create_renewal_voucher_table():
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS renewal_voucher (
+            id SERIAL PRIMARY KEY,
+            item_name TEXT NOT NULL,
+            quantity INTEGER NOT NULL,
+            date TEXT NOT NULL,
+            remarks TEXT,
+            head TEXT,
+            lp_no TEXT,
+            office TEXT
+        )
+    """)
+    cur.execute("ALTER TABLE renewal_voucher ADD COLUMN IF NOT EXISTS office TEXT;")
+    conn.commit()
+    conn.close()
+# --- end table creation functions ---
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use environment variable for production
+
+
+# --- Ensure all tables exist at startup ---
+def ensure_tables():
+    create_users_table()
+    create_ledger_table()
+    create_received_items_table()
+    create_items_category_table()
+    create_head_office_table()
+    create_ledger_entries_table()
+    create_renewal_voucher_table()
+
+ensure_tables()
+# --- end ensure tables ---
 
 # Set up pdfkit configuration
 WKHTMLTOPDF_PATH = shutil.which("wkhtmltopdf")
@@ -1316,12 +1449,5 @@ def add_renewal_voucher():
     return render_template('add_renewal_voucher.html', message=message, error=error, offices=offices)
 
 if __name__ == '__main__':
-    create_users_table()
-    create_ledger_table()
-    create_received_items_table()
-    create_items_category_table()
-    create_head_office_table()
-    create_ledger_entries_table()
-    create_renewal_voucher_table()
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port)
