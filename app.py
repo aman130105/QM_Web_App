@@ -241,9 +241,18 @@ def register():
 # Dashboard Page
 @app.route('/dashboard')
 def dashboard():
-    user = {
-        "name": "Siddharth",
-    }
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    username = session['user']
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    cur.execute("SELECT * FROM users WHERE username=%s", (username,))
+    user = cur.fetchone()
+    conn.close()
+    if not user:
+        # If user not found in DB, force logout
+        session.clear()
+        return redirect(url_for('login'))
     return render_template('dashboard.html', user=user)
 
 # Logout
@@ -293,8 +302,13 @@ def receive():
     cur.execute("SELECT * FROM received_items ORDER BY id DESC")
     entries = cur.fetchall()
     entries = [dict(row) for row in entries]
-    categories = Ledger.get_categories()
-    items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
+    # Defensive: If ledger is empty, categories/items_by_category should not fail
+    try:
+        categories = Ledger.get_categories()
+        items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
+    except Exception:
+        categories = []
+        items_by_category = {}
     conn.close()
     return render_template(
         'receive.html',
@@ -967,8 +981,9 @@ def report():
     items = [row['item_name'] for row in cur.fetchall()]
     cur.execute("SELECT DISTINCT head FROM ledger")
     heads = [row['head'] for row in cur.fetchall()]
-    cur.execute("SELECT DISTINCT issued_to FROM issued_items")
-    offices = [row['issued_to'] for row in cur.fetchall()]
+    # Always use office names from head_office for dropdown
+    cur.execute("SELECT office_name FROM head_office WHERE office_name IS NOT NULL AND office_name != ''")
+    offices = [row['office_name'] for row in cur.fetchall()]
     items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
 
     # Calculate totals from filtered transactions (fix: use only filtered transactions)
@@ -990,70 +1005,6 @@ def report():
         total_balance=total_balance,
         now=datetime.now
     )
-
-class HeadOfficeManager:
-    @staticmethod
-    def get_all():
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM head_office")
-        rows = cur.fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
-
-    @staticmethod
-    def get_all_heads():
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT id, head FROM head_office WHERE head != ''")
-        rows = cur.fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
-
-    @staticmethod
-    def get_all_offices():
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT id, office_name FROM head_office WHERE office_name != ''")
-        rows = cur.fetchall()
-        conn.close()
-        return [dict(row) for row in rows]
-
-    @staticmethod
-    def add(head, office_name):
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("INSERT INTO head_office (head, office_name) VALUES (%s, %s)", (head, office_name))
-        conn.commit()
-        conn.close()
-
-    @staticmethod
-    def update(id, head, office_name):
-        conn = get_db_connection()
-        cur = conn.cursor()
-        if head:
-            cur.execute("UPDATE head_office SET head=%s WHERE id=%s", (head, id))
-        elif office_name:
-            cur.execute("UPDATE head_office SET office_name=%s WHERE id=%s", (office_name, id))
-        conn.commit()
-        conn.close()
-
-    @staticmethod
-    def delete(id):
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("DELETE FROM head_office WHERE id=%s", (id,))
-        conn.commit()
-        conn.close()
-
-    @staticmethod
-    def get_by_id(id):
-        conn = get_db_connection()
-        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM head_office WHERE id=%s", (id,))
-        row = cur.fetchone()
-        conn.close()
-        return dict(row) if row else None
 
 @app.route('/export_excel')
 def export_excel():
