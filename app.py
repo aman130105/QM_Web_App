@@ -800,7 +800,6 @@ def report():
     if head:
         where.append("head=%s")
         params.append(head)
-    # Fix: Only filter by issued_to for issued_items, not for received_items
     where_received = list(where)
     params_received = list(params)
     where_issued = list(where)
@@ -814,19 +813,32 @@ def report():
     params_issued.extend([from_date, to_date])
     where_clause_received = " AND ".join(where_received) if where_received else "1=1"
     where_clause_issued = " AND ".join(where_issued) if where_issued else "1=1"
-    query = f"""
-        SELECT date, category, 'Receive' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
-               NULL as previous, qty as received, NULL as issued, NULL as office
-        FROM received_items
-        WHERE {where_clause_received}
-        UNION ALL
-        SELECT date, category, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
-               NULL as previous, NULL as received, qty as issued, issued_to as office
-        FROM issued_items
-        WHERE {where_clause_issued}
-        ORDER BY date DESC
-    """
-    cur.execute(query, params_received + params_issued)
+
+    # If office is selected, only show Issue transactions for that office
+    if office:
+        query = f"""
+            SELECT date, category, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+                   NULL as previous, NULL as received, qty as issued, issued_to as office
+            FROM issued_items
+            WHERE {where_clause_issued}
+            ORDER BY date DESC
+        """
+        cur.execute(query, params_issued)
+    else:
+        query = f"""
+            SELECT date, category, 'Receive' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+                   NULL as previous, qty as received, NULL as issued, NULL as office
+            FROM received_items
+            WHERE {where_clause_received}
+            UNION ALL
+            SELECT date, category, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+                   NULL as previous, NULL as received, qty as issued, issued_to as office
+            FROM issued_items
+            WHERE {where_clause_issued}
+            ORDER BY date DESC
+        """
+        cur.execute(query, params_received + params_issued)
+
     transactions = [dict(row) for row in cur.fetchall()]
     cur.execute("SELECT DISTINCT category FROM ledger")
     categories = [row['category'] for row in cur.fetchall()]
@@ -838,7 +850,7 @@ def report():
     offices = [row['issued_to'] for row in cur.fetchall()]
     items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
 
-    # Calculate totals from filtered transactions (fix: use only filtered transactions)
+    # Totals: Only count what is shown
     total_received = sum(t.get('received', 0) or 0 for t in transactions if t.get('type') == 'Receive')
     total_issued = sum(t.get('issued', 0) or 0 for t in transactions if t.get('type') == 'Issue')
     total_balance = total_received - total_issued
@@ -1353,6 +1365,97 @@ def format_date_ddmmyyyy(date_str):
         return date_str
     except Exception:
         return date_str
+
+@app.route('/export_report_pdf')
+def export_report_pdf():
+    if 'user' not in session:
+        return redirect(url_for('login'))
+    category = request.args.get('category', '')
+    item = request.args.get('item', '')
+    head = request.args.get('head', '')
+    office = request.args.get('office', '')
+    from_date = request.args.get('from_date', '2000-01-01')
+    to_date = request.args.get('to_date', datetime.now().strftime('%Y-%m-%d'))
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    where = []
+    params = []
+    if category:
+        where.append("category=%s")
+        params.append(category)
+    if item:
+        where.append("item_name=%s")
+        params.append(item)
+    if head:
+        where.append("head=%s")
+        params.append(head)
+    where_received = list(where)
+    params_received = list(params)
+    where_issued = list(where)
+    params_issued = list(params)
+    if office:
+        where_issued.append("issued_to=%s")
+        params_issued.append(office)
+    where_received.append("date BETWEEN %s AND %s")
+    params_received.extend([from_date, to_date])
+    where_issued.append("date BETWEEN %s AND %s")
+    params_issued.extend([from_date, to_date])
+    where_clause_received = " AND ".join(where_received) if where_received else "1=1"
+    where_clause_issued = " AND ".join(where_issued) if where_issued else "1=1"
+
+    if office:
+        query = f"""
+            SELECT date, category, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+                   NULL as previous, NULL as received, qty as issued, issued_to as office
+            FROM issued_items
+            WHERE {where_clause_issued}
+            ORDER BY date DESC
+        """
+        cur.execute(query, params_issued)
+    else:
+        query = f"""
+            SELECT date, category, 'Receive' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+                   NULL as previous, qty as received, NULL as issued, NULL as office
+            FROM received_items
+            WHERE {where_clause_received}
+            UNION ALL
+            SELECT date, category, 'Issue' as type, item_name as item, remarks as description, head, ledger_page_no as lp_no,
+                   NULL as previous, NULL as received, qty as issued, issued_to as office
+            FROM issued_items
+            WHERE {where_clause_issued}
+            ORDER BY date DESC
+        """
+        cur.execute(query, params_received + params_issued)
+
+    transactions = [dict(row) for row in cur.fetchall()]
+    total_received = sum(t.get('received', 0) or 0 for t in transactions if t.get('type') == 'Receive')
+    total_issued = sum(t.get('issued', 0) or 0 for t in transactions if t.get('type') == 'Issue')
+    total_balance = total_received - total_issued
+    conn.close()
+
+    rendered = render_template(
+        'report_pdf.html',
+        transactions=transactions,
+        total_received=total_received,
+        total_issued=total_issued,
+        total_balance=total_balance
+    )
+    options = {
+        'enable-local-file-access': None,
+        'orientation': 'Landscape',
+        'page-size': 'A4',
+        'margin-top': '0mm',
+        'margin-bottom': '0mm',
+        'margin-left': '0mm',
+        'margin-right': '0mm'
+    }
+    pdf = pdfkit.from_string(rendered, False, configuration=pdfkit_config, options=options)
+    return send_file(
+        io.BytesIO(pdf),
+        as_attachment=True,
+        download_name="transaction_report.pdf",
+        mimetype="application/pdf"
+    )
 
 if __name__ == '__main__':
     create_users_table()

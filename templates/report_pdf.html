@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Transaction Report PDF</title>
+    <style>
+        @page {
+            size: A4 landscape;
+            margin: 18mm 12mm 18mm 12mm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            background: #fff;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            width: 100%;
+            margin: 0 auto;
+        }
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 0;
+            margin-bottom: 18px;
+        }
+        .header-left, .header-right {
+            font-size: 1.1em;
+            line-height: 1.7;
+        }
+        .header-left {
+            text-align: left;
+            font-weight: 600;
+        }
+        .header-right {
+            text-align: right;
+            font-weight: 600;
+        }
+        .header-center {
+            flex: 0 0 auto;
+            text-align: center;
+            padding: 0 24px;
+        }
+        .header-center img {
+            display: block;
+            margin: 0 auto 4px auto;
+            height: 90px;
+        }
+        .title {
+            text-align: center;
+            font-size: 2.1em;
+            color: #d90429;
+            font-weight: bold;
+            margin: 18px 0 18px 0;
+            text-decoration: underline;
+            letter-spacing: 2px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 10px 0 10px 0;
+            font-size: 1.08em;
+        }
+        .info-row .left {
+            width: 60%;
+        }
+        .info-row .right {
+            width: 36%;
+            text-align: right;
+        }
+        .info-row strong {
+            font-weight: bold;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 8px;
+            font-size: 1.01em;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #888;
+            padding: 7px 5px;
+            text-align: center;
+        }
+        th {
+            background: #e3eafc;
+            font-size: 1.07em;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        tbody tr:nth-child(even) {
+            background: #f7fafd;
+        }
+        .totals-row {
+            background: #111;
+            color: #ffe600;
+            font-size: 1.1em;
+            font-weight: bold;
+            text-align: center;
+        }
+        .signature {
+            margin-top: 38px;
+            text-align: right;
+            font-size: 1.08em;
+            font-weight: 500;
+        }
+        .signature p {
+            margin: 7px 0;
+        }
+        .signature p:first-child {
+            font-weight: bold;
+            font-size: 1.08em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-row">
+        <div class="header-left">
+            <div><strong>Ph: 080-22001521</strong></div>
+            <div>Email: bangalore-apsu@cisf.gov.in</div>
+        </div>
+        <div class="header-center">
+            <img src="{{ url_for('static', filename='cisf_logo.png') }}" alt="CISF Logo">
+        </div>
+        <div class="header-right">
+            <div><strong>Office of the DIG/CASO</strong></div>
+            <div>CISF Unit ASG Bangalore</div>
+            <div>ISO 9001:2015 Certified</div>
+        </div>
+    </div>
+    <div class="title">TRANSACTION REPORT</div>
+    <table>
+        <thead>
+            <tr>
+                <th>S.No</th>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Category</th>
+                <th>Name</th>
+                <th>Head</th>
+                <th>L/P No.</th>
+                <th>Previous</th>
+                <th>Received</th>
+                <th>Issue</th>
+                <th>Office</th>
+                <th>Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% set sn = 1 %}
+            {% for t in transactions %}
+                <tr>
+                    <td>{{ sn }}</td>
+                    <td>{{ t.date if t.date else '--' }}</td>
+                    <td>{{ t.type if t.type else '--' }}</td>
+                    <td>{{ t.category if t.category else '--' }}</td>
+                    <td>{{ t.item if t.item else '--' }}</td>
+                    <td>{{ t.head if t.head else '--' }}</td>
+                    <td>{{ t.lp_no if t.lp_no else '--' }}</td>
+                    <td>{{ t.previous if t.previous else '--' }}</td>
+                    <td>
+                        {% if t.type == 'Receive' %}
+                            {{ t.received if t.received else '--' }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if t.type == 'Issue' %}
+                            {{ t.issued if t.issued else '--' }}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </td>
+                    <td>{{ t.office if t.office else '--' }}</td>
+                    <td>{{ t.description if t.description else '-' }}</td>
+                </tr>
+                {% set sn = sn + 1 %}
+            {% endfor %}
+            {% if sn == 1 %}
+            <tr>
+                <td colspan="12" style="text-align:center;color:#888;">No data found.</td>
+            </tr>
+            {% endif %}
+        </tbody>
+        <tfoot>
+            <tr class="totals-row">
+                <td colspan="8">Total Stock Received = {{ total_received }}</td>
+                <td colspan="1">{{ total_received }}</td>
+                <td colspan="1">{{ total_issued }}</td>
+                <td colspan="2">Total Stock Balance = {{ total_balance }}</td>
+            </tr>
+        </tfoot>
+    </table>
+    <div class="signature">
+        <p>Signature:</p>
+        <p>Quarter Master</p>
+        <p>CISF UNIT ASG BANGALORE</p>
+    </div>
+</div>
+</body>
+</html>

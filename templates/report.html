@@ -174,8 +174,9 @@
             onclick="window.location='{{ url_for('export_excel', **request.args) }}'">
             <i class="fa fa-file-excel"></i> Export Excel
         </button>
-        <!-- PDF button (future) -->
-        <!-- <button type="button" class="pdf" disabled><i class="fa fa-file-pdf"></i> Export PDF</button> -->
+        <button type="button" class="print" onclick="printReportTable()">
+            <i class="fa fa-print"></i> Print
+        </button>
         <button type="button" class="back" onclick="window.location='{{ url_for("dashboard") }}'">
             <i class="fa fa-arrow-left"></i> Back
         </button>
@@ -212,6 +213,51 @@
     }
     function showSpinner() {
         document.getElementById('spinner').style.display = 'inline-block';
+    }
+    function printReportTable() {
+        var printContents = '';
+        var title = document.querySelector('.report-title').outerHTML;
+        var table = document.querySelector('.table-scroll').outerHTML;
+        var totals = document.querySelector('.totals-row').outerHTML;
+        printContents += title + table + totals;
+        var win = window.open('', '', 'width=1200,height=900');
+        win.document.write('<html><head><title>Transaction Report</title>');
+        win.document.write('<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>');
+        win.document.write(`
+            <style>
+                @page {
+                    size: A4 landscape;
+                    margin: 18mm 12mm 18mm 12mm;
+                }
+                body {
+                    font-family: Arial, sans-serif;
+                    font-size: 12px;
+                    background: #fff;
+                    margin: 0;
+                    padding: 0;
+                }
+                .report-title {
+                    text-align: center;
+                    font-size: 2rem;
+                    font-weight: bold;
+                    margin: 10px 0 20px 0;
+                    color: #2d3a4a;
+                }
+                table { width: 100%; border-collapse: collapse; background: #fff; }
+                th, td { border: 1px solid #bbb; padding: 7px 8px; font-size: 1.08rem; }
+                th { background: #f5f5f5; color: #222; font-weight: bold; }
+                tr:nth-child(even) { background: #f3f6fb; }
+                tr:hover { background: #e0e7ef; }
+                .totals-row { background: #111; color: #ffe600; font-size: 1.3rem; font-weight: bold; text-align: center; }
+            </style>
+        `);
+        win.document.write('</head><body>' + printContents + '</body></html>');
+        win.document.close();
+        win.focus();
+        setTimeout(function() {
+            win.print();
+            win.close();
+        }, 500);
     }
     window.onload = function() {
         updateItemDropdown();
