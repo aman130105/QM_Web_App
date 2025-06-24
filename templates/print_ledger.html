@@ -360,16 +360,10 @@
                         </tr>
                         {% set sn = sn + 1 %}
                     {% endfor %}
-                    {% if sn == 1 %}
+                    {% if sn == 1 or not transactions %}
                         <tr>
                             <td colspan="10" class="no-data">No transactions available for this item.</td>
                         </tr>
-                    {% endif %}
-                    {% if not transactions %}
-                        <tr>
-                            <td colspan="10" class="no-data">No transactions available for this item.</td>
-                        </tr>
-
                     {% endif %}
                 </tbody>
             </table>

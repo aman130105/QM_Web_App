@@ -1045,7 +1045,6 @@ def print_ledger():
     item = request.args.get('item')
     item_info = None
     transactions = []
-    # Fetch categories, items, and items_by_category for treeview and dropdowns
     categories = Ledger.get_categories()
     items_by_category = {cat: Ledger.get_items_by_category(cat) for cat in categories}
     items = []
@@ -1053,7 +1052,6 @@ def print_ledger():
     if category:
         items = items_by_category.get(category, [])
     else:
-        # If no category selected, flatten all items
         for item_list in items_by_category.values():
             items.extend(item_list)
     if category and item:
@@ -1062,12 +1060,24 @@ def print_ledger():
         # Ledger info
         cur.execute("SELECT * FROM ledger WHERE category=%s AND item_name=%s", (category, item))
         item_info = cur.fetchone()
-        # Transactions
-        cur.execute("SELECT * FROM ledger_entries WHERE item_name=%s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
+        # Only include entries that exist in received_items or issued_items (not deleted)
+        cur.execute("""
+            SELECT * FROM ledger_entries
+            WHERE item_name=%s
+            AND (
+                (type='Receive' AND EXISTS (SELECT 1 FROM received_items WHERE item_name=%s AND date=ledger_entries.date AND qty=ledger_entries.receive_qty))
+                OR
+                (type='Issue' AND EXISTS (SELECT 1 FROM issued_items WHERE item_name=%s AND date=ledger_entries.date AND qty=ledger_entries.issue_qty))
+            )
+            ORDER BY TO_DATE(date, 'YYYY-MM-DD') ASC
+        """, (item, item, item))
         transactions = cur.fetchall()
+        # Format date as DD-MM-YYYY
+        for t in transactions:
+            t['date'] = format_date_ddmmyyyy(t['date'])
         conn.close()
     return render_template(
-        'print_ledger.html',
+        'Print_ledger.html',
         item_info=item_info,
         transactions=transactions,
         categories=categories,
@@ -1087,14 +1097,27 @@ def print_ledger_print():
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM ledger WHERE category=%s AND item_name=%s", (category, item))
         item_info = cur.fetchone()
-        cur.execute("SELECT * FROM ledger_entries WHERE item_name=%s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
+        # Only include entries that exist in received_items or issued_items (not deleted)
+        cur.execute("""
+            SELECT * FROM ledger_entries
+            WHERE item_name=%s
+            AND (
+                (type='Receive' AND EXISTS (SELECT 1 FROM received_items WHERE item_name=%s AND date=ledger_entries.date AND qty=ledger_entries.receive_qty))
+                OR
+                (type='Issue' AND EXISTS (SELECT 1 FROM issued_items WHERE item_name=%s AND date=ledger_entries.date AND qty=ledger_entries.issue_qty))
+            )
+            ORDER BY TO_DATE(date, 'YYYY-MM-DD') ASC
+        """, (item, item, item))
         transactions = cur.fetchall()
+        # Format date as DD-MM-YYYY
+        for t in transactions:
+            t['date'] = format_date_ddmmyyyy(t['date'])
         conn.close()
     return render_template(
         'print_ledger_print.html',
         item_info=item_info,
         transactions=transactions,
-        entries=transactions  # <-- add this line
+        entries=transactions
     )
 
 @app.route('/export_ledger_pdf')
@@ -1314,6 +1337,22 @@ def add_renewal_voucher():
             except Exception as e:
                 error = f"Error: {str(e)}"
     return render_template('add_renewal_voucher.html', message=message, error=error, offices=offices)
+
+# Add this function near the top, after imports
+def format_date_ddmmyyyy(date_str):
+    try:
+        if not date_str:
+            return ''
+        # Try parsing as YYYY-MM-DD or YYYY/MM/DD
+        for fmt in ("%Y-%m-%d", "%Y/%m/%d", "%d-%m-%Y", "%d/%m/%Y"):
+            try:
+                dt = datetime.strptime(date_str, fmt)
+                return dt.strftime("%d-%m-%Y")
+            except Exception:
+                continue
+        return date_str
+    except Exception:
+        return date_str
 
 if __name__ == '__main__':
     create_users_table()
