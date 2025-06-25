@@ -155,7 +155,6 @@
             <tr>
                 <th>S.No</th>
                 <th>Date</th>
-                <th>Type</th>
                 <th>Receive From</th>
                 <th>Issue To</th>
                 <th>Prev Bal</th>
@@ -167,12 +166,11 @@
         </thead>
         <tbody>
             {% set data = entries if entries is defined else transactions if transactions is defined else [] %}
-            {% set sn = 1 %}
-            {% for t in data %}
+            {% if data|length > 0 %}
+                {% for t in data %}
                 <tr class="{% if t.type == 'Receive' %}receive-row{% endif %}">
-                    <td>{{ sn }}</td>
+                    <td>{{ loop.index }}</td>
                     <td>{{ t.date or '--' }}</td>
-                    <td>{{ t.type or '--' }}</td>
                     <td>{{ t.receive_from or '-' }}</td>
                     <td>{{ t.issue_to or '-' }}</td>
                     <td>{{ t.prev_bal or 0 }}</td>
@@ -181,12 +179,11 @@
                     <td>{{ t.balance or 0 }}</td>
                     <td>{{ t.remark or '-' }}</td>
                 </tr>
-                {% set sn = sn + 1 %}
-            {% endfor %}
-            {% if sn == 1 %}
-            <tr>
-                <td colspan="10" class="no-data">No transactions available for this item.</td>
-            </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="9" class="no-data">No transactions available for this item.</td>
+                </tr>
             {% endif %}
         </tbody>
     </table>
@@ -195,6 +192,9 @@
         <p>Quarter Master</p>
         <p>CISF UNIT ASG BANGALORE</p>
     </div>
+</div>
+</body>
+</html>
 </div>
 </body>
 </html>

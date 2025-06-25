@@ -1012,7 +1012,6 @@ def export_ledger_excel():
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
     rows = cur.fetchall()
-    # Format date and calculate running balance
     for t in rows:
         t['date'] = format_date_ddmmyyyy(t['date'])
     rows = calculate_ledger_running_balance(rows)
@@ -1023,7 +1022,8 @@ def export_ledger_excel():
     ws.append(headers)
     for idx, row in enumerate(rows, 1):
         ws.append([
-            idx, row['date'], row['type'], row['receive_from'] or '-', row['issue_to'] or '-',
+            idx, row['date'],
+            row['receive_from'] or '-', row['issue_to'] or '-',
             row['prev_bal'] or 0, row['receive_qty'] or 0, row['issue_qty'] or 0, row['balance'] or 0, row['remark'] or '-'
         ])
     output = io.BytesIO()
@@ -1075,51 +1075,6 @@ def calculate_ledger_running_balance(transactions):
         t['balance'] = running_balance
     return transactions
 
-def get_full_ledger_transactions(category, item):
-    conn = get_db_connection()
-    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-    # Get all received
-    cur.execute("""
-        SELECT date, 'Receive' as type, head as receive_from, NULL as issue_to, NULL as prev_bal,
-               qty as receive_qty, 0 as issue_qty, NULL as balance, remarks as remark
-        FROM received_items
-        WHERE category=%s AND item_name=%s
-    """, (category, item))
-    received = cur.fetchall()
-    # Get all issued
-    cur.execute("""
-        SELECT date, 'Issue' as type, NULL as receive_from, issued_to as issue_to, NULL as prev_bal,
-               0 as receive_qty, qty as issue_qty, NULL as balance, remarks as remark
-        FROM issued_items
-        WHERE category=%s AND item_name=%s
-    """, (category, item))
-    issued = cur.fetchall()
-    conn.close()
-    # Merge and sort by date (ascending), then type (Receive before Issue)
-    all_tx = received + issued
-    def sort_key(t):
-        try:
-            return (datetime.strptime(t['date'], "%Y-%m-%d"), 0 if t['type'] == 'Receive' else 1)
-        except Exception:
-            try:
-                return (datetime.strptime(t['date'], "%d-%m-%Y"), 0 if t['type'] == 'Receive' else 1)
-            except Exception:
-                return (t['date'], 0 if t['type'] == 'Receive' else 1)
-    all_tx.sort(key=sort_key)
-    # Calculate running balance
-    running_balance = 0
-    for t in all_tx:
-        prev_bal = running_balance
-        receive = t.get('receive_qty', 0) or 0
-        issue = t.get('issue_qty', 0) or 0
-        if t.get('type') == 'Receive':
-            running_balance += int(receive)
-        elif t.get('type') == 'Issue':
-            running_balance -= int(issue)
-        t['prev_bal'] = prev_bal
-        t['balance'] = running_balance
-    return all_tx
-
 @app.route('/print_ledger')
 def print_ledger():
     category = request.args.get('category')
@@ -1140,9 +1095,21 @@ def print_ledger():
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM ledger WHERE category=%s AND item_name=%s", (category, item))
         item_info = cur.fetchone()
+        cur.execute("""
+            SELECT * FROM ledger_entries
+            WHERE item_name=%s
+            AND (
+                (type='Receive' AND EXISTS (SELECT 1 FROM received_items WHERE item_name=%s AND date=ledger_entries.date AND qty=ledger_entries.receive_qty))
+                OR
+                (type='Issue' AND EXISTS (SELECT 1 FROM issued_items WHERE item_name=%s AND date=ledger_entries.date AND qty=ledger_entries.issue_qty))
+            )
+            ORDER BY TO_DATE(date, 'YYYY-MM-DD') ASC
+        """, (item, item, item))
+        transactions = cur.fetchall()
+        for t in transactions:
+            t['date'] = format_date_ddmmyyyy(t['date'])
+        transactions = calculate_ledger_running_balance(transactions)
         conn.close()
-        # Use new function to get all transactions
-        transactions = get_full_ledger_transactions(category, item)
     return render_template(
         'Print_ledger.html',
         item_info=item_info,
@@ -1164,8 +1131,21 @@ def print_ledger_print():
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM ledger WHERE category=%s AND item_name=%s", (category, item))
         item_info = cur.fetchone()
+        cur.execute("""
+            SELECT * FROM ledger_entries
+            WHERE item_name=%s
+            AND (
+                (type='Receive' AND EXISTS (SELECT 1 FROM received_items WHERE item_name=%s AND date=ledger_entries.date AND qty=ledger_entries.receive_qty))
+                OR
+                (type='Issue' AND EXISTS (SELECT 1 FROM issued_items WHERE item_name=%s AND date=ledger_entries.date AND qty=ledger_entries.issue_qty))
+            )
+            ORDER BY TO_DATE(date, 'YYYY-MM-DD') ASC
+        """, (item, item, item))
+        transactions = cur.fetchall()
+        for t in transactions:
+            t['date'] = format_date_ddmmyyyy(t['date'])
+        transactions = calculate_ledger_running_balance(transactions)
         conn.close()
-        transactions = get_full_ledger_transactions(category, item)
     return render_template(
         'print_ledger_print.html',
         item_info=item_info,
