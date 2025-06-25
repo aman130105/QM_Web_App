@@ -344,10 +344,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set sn = 1 %}
                     {% for t in transactions %}
                         <tr>
-                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ sn }}</td>
+                            <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ loop.index }}</td>
                             <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.date if t.date else '--' }}</td>
                             <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.type if t.type else '--' }}</td>
                             <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.receive_from if t.receive_from else '-' }}</td>
@@ -358,9 +357,8 @@
                             <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.balance if t.balance is not none else 0 }}</td>
                             <td>{{ t.remark if t.remark else '-' }}</td>
                         </tr>
-                        {% set sn = sn + 1 %}
                     {% endfor %}
-                    {% if sn == 1 or not transactions %}
+                    {% if transactions|length == 0 %}
                         <tr>
                             <td colspan="10" class="no-data">No transactions available for this item.</td>
                         </tr>
@@ -378,5 +376,7 @@
         </div>
     {% endif %}
 </div>
+</body>
+</html>
 </body>
 </html>
