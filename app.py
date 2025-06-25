@@ -1211,13 +1211,30 @@ class RenewalVoucher:
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         if office:
-            cur.execute("SELECT * FROM renewal_voucher WHERE office=%s ORDER BY id DESC", (office,))
+            cur.execute(
+                "SELECT id, item_name, quantity, date, remarks, head, lp_no, office FROM renewal_voucher WHERE office=%s ORDER BY id ASC",
+                (office,)
+            )
         else:
-            cur.execute("SELECT * FROM renewal_voucher ORDER BY id DESC")
+            cur.execute(
+                "SELECT id, item_name, quantity, date, remarks, head, lp_no, office FROM renewal_voucher ORDER BY id ASC"
+            )
         vouchers = cur.fetchall()
         conn.close()
-        print("Fetched vouchers:", vouchers)  # Debug: See what is fetched
-        return [dict(row) for row in vouchers]
+        # Defensive: ensure all fields exist
+        result = []
+        for v in vouchers:
+            result.append({
+                'id': v.get('id', ''),
+                'item_name': v.get('item_name', ''),
+                'quantity': v.get('quantity', ''),
+                'date': v.get('date', ''),
+                'remarks': v.get('remarks', ''),
+                'head': v.get('head', ''),
+                'lp_no': v.get('lp_no', ''),
+                'office': v.get('office', ''),
+            })
+        return result
 
     @staticmethod
     def add(item_name, quantity, date, remarks, head=None, lp_no=None, office=None):
@@ -1225,7 +1242,7 @@ class RenewalVoucher:
         cur = conn.cursor()
         cur.execute(
             "INSERT INTO renewal_voucher (item_name, quantity, date, remarks, head, lp_no, office) VALUES (%s, %s, %s, %s, %s, %s, %s)",
-            (item_name, quantity, date, remarks, head, lp_no, office)
+            (item_name, quantity, date, remarks, head or '', lp_no or '', office or '')
         )
         conn.commit()
         conn.close()
@@ -1236,7 +1253,7 @@ class RenewalVoucher:
         cur = conn.cursor()
         cur.execute(
             "UPDATE renewal_voucher SET item_name=%s, quantity=%s, date=%s, remarks=%s, head=%s, lp_no=%s, office=%s WHERE id=%s",
-            (item_name, quantity, date, remarks, head, lp_no, office, voucher_id)
+            (item_name, quantity, date, remarks, head or '', lp_no or '', office or '', voucher_id)
         )
         conn.commit()
         conn.close()
@@ -1253,10 +1270,21 @@ class RenewalVoucher:
     def get_by_id(voucher_id):
         conn = get_db_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        cur.execute("SELECT * FROM renewal_voucher WHERE id=%s", (voucher_id,))
+        cur.execute("SELECT id, item_name, quantity, date, remarks, head, lp_no, office FROM renewal_voucher WHERE id=%s", (voucher_id,))
         row = cur.fetchone()
         conn.close()
-        return dict(row) if row else None
+        if row:
+            return {
+                'id': row.get('id', ''),
+                'item_name': row.get('item_name', ''),
+                'quantity': row.get('quantity', ''),
+                'date': row.get('date', ''),
+                'remarks': row.get('remarks', ''),
+                'head': row.get('head', ''),
+                'lp_no': row.get('lp_no', ''),
+                'office': row.get('office', ''),
+            }
+        return None
 
 def create_renewal_voucher_table():
     conn = get_db_connection()
@@ -1283,13 +1311,17 @@ def renewal_voucher():
     office = request.args.get('office', '')
     offices = HeadOfficeManager.get_all_offices()
     vouchers = RenewalVoucher.get_all(office if office else None)
-    return render_template('renewal_voucher.html', vouchers=vouchers, offices=offices, selected_office=office)
+    return render_template(
+        'renewal_voucher.html',
+        vouchers=vouchers,
+        offices=offices,
+        selected_office=office
+    )
 
 @app.route('/export_renewal_voucher_excel')
 def export_renewal_voucher_excel():
     office = request.args.get('office', '')
     vouchers = RenewalVoucher.get_all(office if office else None)
-    import openpyxl
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Renewal Voucher"
@@ -1297,7 +1329,14 @@ def export_renewal_voucher_excel():
     ws.append(headers)
     for idx, v in enumerate(vouchers, 1):
         ws.append([
-            idx, v['item_name'], v.get('head', ''), v.get('lp_no', ''), v['quantity'], v['date'], v.get('remarks', ''), v.get('office', '')
+            idx,
+            v.get('item_name', ''),
+            v.get('head', ''),
+            v.get('lp_no', ''),
+            v.get('quantity', ''),
+            v.get('date', ''),
+            v.get('remarks', ''),
+            v.get('office', '')
         ])
     output = io.BytesIO()
     wb.save(output)
@@ -1317,7 +1356,13 @@ def export_renewal_voucher_pdf():
     options = {
         'enable-local-file-access': None,
         'load-error-handling': 'ignore',
-        'load-media-error-handling': 'ignore'
+        'load-media-error-handling': 'ignore',
+        'page-size': 'A4',
+        'orientation': 'Portrait',
+        'margin-top': '18mm',
+        'margin-bottom': '18mm',
+        'margin-left': '12mm',
+        'margin-right': '12mm'
     }
     pdf = pdfkit.from_string(rendered, False, configuration=pdfkit_config, options=options)
     return send_file(

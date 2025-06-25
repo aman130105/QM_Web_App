@@ -1,180 +1,220 @@
-{% extends "dashboard.html" %}
-{% block content %}
-<div class="rv-container">
-    <div class="rv-header">Renewal Voucher</div>
-    <form method="get" class="rv-search-row">
-        <label for="office">Select Office:</label>
-        <select name="office" id="office">
-            <option value="">Select office</option>
-            {% for office in offices %}
-                <option value="{{ office.office_name }}" {% if selected_office == office.office_name %}selected{% endif %}>{{ office.office_name }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Search</button>
-    </form>
-    <div class="rv-table-container">
-        <table class="rv-table">
-            <thead>
-                <tr>
-                    <th>SL No.</th>
-                    <th>Item Name &amp; Description</th>
-                    <th>Head</th>
-                    <th>L/P No.</th>
-                    <th>Qty Issue</th>
-                    <th>Issue Date</th>
-                    <th>Remark</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if vouchers %}
-                    {% for v in vouchers %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td>{{ v.item_name }}</td>
-                            <td>{{ v.head or '' }}</td>
-                            <td>{{ v.lp_no or '' }}</td>
-                            <td>{{ v.quantity }}</td>
-                            <td>{{ v.date }}</td>
-                            <td>{{ v.remarks or '' }}</td>
-                        </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="7" style="text-align:center;">No data available</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
-    </div>
-    <div class="rv-actions">
-        <a class="pdf-btn" href="{{ url_for('export_renewal_voucher_pdf', office=selected_office) }}">Export to PDF</a>
-        <a class="excel-btn" href="{{ url_for('export_renewal_voucher_excel', office=selected_office) }}">Export to Excel</a>
-        <a href="{{ url_for('dashboard') }}" class="back-btn">Back</a>
-    </div>
-</div>
-{% endblock %}
-        .rv-search-row button:hover {
-            background: #0056b3;
-        }
-        .rv-table-container {
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Renewal Voucher</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"/>
+    <style>
+        body { background: #e5e7eb; font-family: Arial, sans-serif; }
+        .voucher-container {
             background: #fff;
-            border-radius: 4px;
-            margin: 0 8px;
-            padding: 0;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin: 24px auto;
+            padding: 0 0 24px 0;
+            border-radius: 14px;
+            width: 900px;
+            box-shadow: 0 4px 24px #0002;
         }
-        table.rv-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 0;
-            font-size: 1.08em;
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 18px;
+            margin-bottom: 0;
+            padding: 0 32px;
         }
-        table.rv-table th, table.rv-table td {
-            border: 1px solid #bbb;
-            padding: 10px 8px;
-            text-align: left;
+        .header-left, .header-right {
+            font-size: 1.1em;
+            line-height: 1.7;
         }
-        table.rv-table th {
-            background: #f5f5f5;
+        .header-left { text-align: left; font-weight: 600; }
+        .header-right { text-align: right; font-weight: 600; }
+        .header-center {
+            flex: 0 0 auto;
+            text-align: center;
+            padding: 0 24px;
+        }
+        .header-center img {
+            display: block;
+            margin: 0 auto 4px auto;
+            height: 90px;
+        }
+        .title {
+            text-align: center;
+            font-size: 2.1em;
+            color: #d90429;
             font-weight: bold;
+            margin: 18px 0 18px 0;
+            text-decoration: underline;
+            letter-spacing: 2px;
+        }
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.08em;
+            margin: 0 32px 0 32px;
+        }
+        .info-row .left, .info-row .right {
+            width: 48%;
+        }
+        .office-row {
+            margin: 12px 32px 0 32px;
             font-size: 1.08em;
         }
-        .rv-actions {
+        table {
+            width: 94%;
+            margin: 18px auto 0 auto;
+            border-collapse: collapse;
+            font-size: 1.07em;
+            background: #fff;
+        }
+        th, td {
+            border: 1px solid #888;
+            padding: 8px 5px;
+            text-align: center;
+        }
+        th {
+            background: #e3eafc;
+            font-size: 1.07em;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .only-two {
+            text-align: center;
+            font-weight: bold;
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
+        }
+        .signature-row {
+            display: flex;
+            justify-content: space-between;
+            margin: 38px 32px 0 32px;
+            font-size: 1.08em;
+        }
+        .signature-block {
+            width: 32%;
+        }
+        .signature-block div {
+            margin-bottom: 6px;
+        }
+        .actions {
             display: flex;
             justify-content: center;
             gap: 18px;
-            margin: 32px 0 18px 0;
+            margin: 24px 0 0 0;
         }
-        .rv-actions button, .rv-actions a {
-            font-size: 1.08em;
-            font-weight: bold;
+        .actions button, .actions a {
+            font-size: 1.1rem;
+            padding: 10px 30px;
+            border-radius: 7px;
             border: none;
-            border-radius: 6px;
-            padding: 10px 28px;
+            font-weight: bold;
+            transition: background 0.2s, color 0.2s;
             cursor: pointer;
-            transition: background 0.2s;
+            text-decoration: none;
         }
-        .rv-actions .pdf-btn {
-            background: #28a745;
-            color: #fff;
-        }
-        .rv-actions .pdf-btn:hover {
-            background: #218838;
-        }
-        .rv-actions .excel-btn {
-            background: #ffc107;
-            color: #222;
-        }
-        .rv-actions .excel-btn:hover {
-            background: #e0a800;
-        }
-        .rv-actions .back-btn {
-            background: #dc3545;
-            color: #fff;
-            margin-left: 24px;
-        }
-        .rv-actions .back-btn:hover {
-            background: #b52a37;
-        }
-        @media (max-width: 700px) {
-            .rv-search-row { flex-direction: column; gap: 10px; }
-            .rv-actions { flex-direction: column; gap: 12px; }
-            .rv-header { font-size: 1.3em; }
-        }
+        .actions .pdf { background: #22c55e; color: #fff; }
+        .actions .excel { background: #facc15; color: #222; }
+        .actions .back { background: #ef4444; color: #fff; }
+        .actions .back:hover { background: #b91c1c; }
     </style>
 </head>
 <body>
-<div class="rv-container">
-    <div class="rv-header">Renewal Voucher</div>
-    <form method="get" class="rv-search-row">
-        <label for="office">Select Office:</label>
-        <select name="office" id="office">
-            <option value="">Select office</option>
-            {% for office in offices %}
-                <option value="{{ office.office_name }}" {% if selected_office == office.office_name %}selected{% endif %}>{{ office.office_name }}</option>
-            {% endfor %}
-        </select>
-        <button type="submit">Search</button>
-    </form>
-    <div class="rv-table-container">
-        <table class="rv-table">
-            <thead>
-                <tr>
-                    <th>SL No.</th>
-                    <th>Item Name &amp; Description</th>
-                    <th>Head</th>
-                    <th>L/P No.</th>
-                    <th>Qty Issue</th>
-                    <th>Issue Date</th>
-                    <th>Remark</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% if vouchers %}
-                    {% for v in vouchers %}
-                        <tr>
-                            <td>{{ loop.index }}</td>
-                            <td>{{ v.item_name }}</td>
-                            <td>{{ v.head or '' }}</td>
-                            <td>{{ v.lp_no or '' }}</td>
-                            <td>{{ v.quantity }}</td>
-                            <td>{{ v.date }}</td>
-                            <td>{{ v.remarks or '' }}</td>
-                        </tr>
-                    {% endfor %}
-                {% else %}
-                    <tr>
-                        <td colspan="7" style="text-align:center;">No data available</td>
-                    </tr>
-                {% endif %}
-            </tbody>
-        </table>
+<div class="voucher-container">
+    <div class="header-row">
+        <div class="header-left">
+            <div><strong>Ph: 080-22001521</strong></div>
+            <div>Email: bangalore-apsu@cisf.gov.in</div>
+        </div>
+        <div class="header-center">
+            <img src="{{ url_for('static', filename='cisf_logo.png') }}" alt="CISF Logo">
+        </div>
+        <div class="header-right">
+            <div><strong>Office of the DIG/CASO</strong></div>
+            <div>CISF Unit ASG Bangalore</div>
+            <div>ISO 9001:2015 Certified</div>
+        </div>
     </div>
-    <div class="rv-actions">
-        <a class="pdf-btn" href="{{ url_for('export_renewal_voucher_pdf', office=selected_office) }}">Export to PDF</a>
-        <a class="excel-btn" href="{{ url_for('export_renewal_voucher_excel', office=selected_office) }}">Export to Excel</a>
-        <a href="{{ url_for('dashboard') }}" class="back-btn">Back</a>
+    <div class="title">RENEWAL VOUCHER</div>
+    <div class="info-row">
+        <div class="left">
+            (To be completed by issuing officer)<br>
+            IV No. /CISF/ASG(B)/QM/2025<br>
+            DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025<br>
+            CISF UNIT ASG BANGALORE-560300
+        </div>
+        <div class="right">
+            (To be completed by receiving officer)<br>
+            RV No. /CISF/ASG(B)/QM/2025<br>
+            DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025<br>
+            CISF UNIT ASG BANGALORE-560300
+        </div>
+    </div>
+    <div class="office-row">
+        Office: {{ selected_office or '-' }}
+    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>SL No.</th>
+                <th>Item Name & Description</th>
+                <th>Head</th>
+                <th>L/P No.</th>
+                <th>Qty Issue</th>
+                <th>Issue Date</th>
+                <th>Remark</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% if vouchers %}
+                {% for v in vouchers %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>{{ v.item_name }}</td>
+                    <td>{{ v.head }}</td>
+                    <td>{{ v.lp_no }}</td>
+                    <td>{{ v.quantity }}</td>
+                    <td>{{ v.date }}</td>
+                    <td>{{ v.remarks }}</td>
+                </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="7" style="text-align:center;color:#888;">No items found.</td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+    <div class="only-two">(Only Two Items)</div>
+    <div class="signature-row">
+        <div class="signature-block">
+            Issued by<br>
+            CISF No............................<br>
+            Rank:...............................<br>
+            Name:...............................<br>
+            CISF ASG BENGALURU
+        </div>
+        <div class="signature-block">
+            Collected by<br>
+            CISF No............................<br>
+            Rank:...............................<br>
+            Name:...............................<br>
+            CISF ASG BENGALURU
+        </div>
+        <div class="signature-block">
+            Received by<br>
+            CISF No............................<br>
+            Rank:...............................<br>
+            Name:...............................<br>
+            CISF ASG BENGALURU
+        </div>
+    </div>
+    <div class="actions">
+        <a class="pdf" href="{{ url_for('export_renewal_voucher_pdf', office=selected_office) }}"><i class="fa fa-file-pdf"></i> Export to PDF</a>
+        <a class="excel" href="{{ url_for('export_renewal_voucher_excel', office=selected_office) }}"><i class="fa fa-file-excel"></i> Export to Excel</a>
+        <a class="back" href="{{ url_for('dashboard') }}"><i class="fa fa-arrow-left"></i> Back</a>
     </div>
 </div>
 </body>
 </html>
+</body>
+</html>
+{% endblock %}

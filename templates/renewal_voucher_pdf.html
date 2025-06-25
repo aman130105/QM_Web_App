@@ -2,37 +2,36 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Renewal Voucher</title>
+    <title>Renewal Voucher PDF</title>
     <style>
+        @page {
+            size: A4 portrait;
+            margin: 18mm 12mm 18mm 12mm;
+        }
         body {
             font-family: Arial, sans-serif;
-            font-size: 16px;
+            font-size: 14px;
+            background: #fff;
             margin: 0;
             padding: 0;
-            background: #fff;
         }
         .container {
-            width: 95%;
+            width: 100%;
             margin: 0 auto;
         }
         .header-row {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            margin-top: 32px;
+            align-items: center;
+            margin-top: 18px;
+            margin-bottom: 0;
         }
         .header-left, .header-right {
             font-size: 1.1em;
-            line-height: 1.6;
+            line-height: 1.7;
         }
-        .header-left {
-            text-align: left;
-            font-weight: 600;
-        }
-        .header-right {
-            text-align: right;
-            font-weight: 600;
-        }
+        .header-left { text-align: left; font-weight: 600; }
+        .header-right { text-align: right; font-weight: 600; }
         .header-center {
             flex: 0 0 auto;
             text-align: center;
@@ -41,90 +40,66 @@
         .header-center img {
             display: block;
             margin: 0 auto 4px auto;
-            height: 80px;
+            height: 90px;
         }
-        .voucher-title {
+        .title {
             text-align: center;
-            font-size: 2em;
-            font-weight: normal;
-            margin: 36px 0 24px 0;
-            letter-spacing: 1px;
+            font-size: 2.1em;
+            color: #d90429;
+            font-weight: bold;
+            margin: 18px 0 18px 0;
+            text-decoration: underline;
+            letter-spacing: 2px;
         }
-        .voucher-section {
+        .info-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0;
+            font-size: 1.08em;
         }
-        .voucher-section .left, .voucher-section .right {
+        .info-row .left, .info-row .right {
             width: 48%;
-            font-size: 1em;
         }
-        .voucher-section .left {
-            text-align: left;
-        }
-        .voucher-section .right {
-            text-align: right;
-        }
-        .voucher-office {
-            margin: 18px 0 12px 0;
+        .office-row {
+            margin: 12px 0 0 0;
             font-size: 1.08em;
         }
-        table.voucher-table {
+        table {
             width: 100%;
+            margin: 18px auto 0 auto;
             border-collapse: collapse;
-            margin: 0 0 0 0;
-            font-size: 1.08em;
-        }
-        table.voucher-table th, table.voucher-table td {
-            border: 1px solid #222;
-            padding: 8px 7px;
-            text-align: center;
-        }
-        table.voucher-table th {
+            font-size: 1.07em;
             background: #fff;
-            font-weight: bold;
         }
-        .only-one-item {
+        th, td {
+            border: 1px solid #888;
+            padding: 8px 5px;
+            text-align: center;
+        }
+        th {
+            background: #e3eafc;
+            font-size: 1.07em;
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .only-two {
             text-align: center;
             font-weight: bold;
-            margin: 8px 0 0 0;
+            margin: 10px 0 0 0;
+            font-size: 1.1em;
         }
-        .signatures {
-            margin-top: 38px;
+        .signature-row {
             display: flex;
-            flex-direction: row;
             justify-content: space-between;
+            margin: 38px 0 0 0;
             font-size: 1.08em;
         }
-        .sign-block {
+        .signature-block {
             width: 32%;
-            text-align: center;
         }
-        .sign-block .label {
-            font-weight: normal;
-            margin-bottom: 8px;
-        }
-        .sign-block .org {
-            margin-top: 8px;
-            font-size: 1em;
-        }
-        .sign-block .line {
-            margin: 0 0 0 0;
-            border-bottom: 1px dotted #888;
-            width: 80%;
-            margin-left: 10%;
-        }
-        .sign-block div {
-            margin-bottom: 2px;
-        }
-        @media print {
-            body { background: #fff; }
-            .container { margin-top: 0; }
+        .signature-block div {
+            margin-bottom: 6px;
         }
     </style>
-    <script>
-        window.onload = function() { window.print(); }
-    </script>
 </head>
 <body>
 <div class="container">
@@ -142,29 +117,29 @@
             <div>ISO 9001:2015 Certified</div>
         </div>
     </div>
-    <div class="voucher-title">RENEWAL VOUCHER</div>
-    <div class="voucher-section">
+    <div class="title">RENEWAL VOUCHER</div>
+    <div class="info-row">
         <div class="left">
-            <div>(To be completed by issuing officer)</div>
-            <div>IV No. /CISF/ASG(B)/QM/2025</div>
-            <div>DATE: / / 2025</div>
-            <div>CISF UNIT ASG BANGALORE-560300</div>
+            (To be completed by issuing officer)<br>
+            IV No. /CISF/ASG(B)/QM/2025<br>
+            DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025<br>
+            CISF UNIT ASG BANGALORE-560300
         </div>
         <div class="right">
-            <div>(To be completed by receiving officer)</div>
-            <div>RV No. /CISF/ASG(B)/QM/2025</div>
-            <div>DATE: / / 2025</div>
-            <div>CISF UNIT ASG BANGALORE-560300</div>
+            (To be completed by receiving officer)<br>
+            RV No. /CISF/ASG(B)/QM/2025<br>
+            DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025<br>
+            CISF UNIT ASG BANGALORE-560300
         </div>
     </div>
-    <div class="voucher-office" style="margin-bottom: 8px;">
-        Office: Coy Commander/A-Coy
+    <div class="office-row">
+        Office: {{ office or '-' }}
     </div>
-    <table class="voucher-table">
+    <table>
         <thead>
             <tr>
                 <th>SL No.</th>
-                <th>Item Name</th>
+                <th>Item Name & Description</th>
                 <th>Head</th>
                 <th>L/P No.</th>
                 <th>Qty Issue</th>
@@ -173,47 +148,47 @@
             </tr>
         </thead>
         <tbody>
-            {% if vouchers and vouchers|length > 0 %}
+            {% if vouchers %}
                 {% for v in vouchers %}
                 <tr>
                     <td>{{ loop.index }}</td>
                     <td>{{ v.item_name }}</td>
-                    <td>{{ v.head or '' }}</td>
-                    <td>{{ v.lp_no or '' }}</td>
+                    <td>{{ v.head }}</td>
+                    <td>{{ v.lp_no }}</td>
                     <td>{{ v.quantity }}</td>
                     <td>{{ v.date }}</td>
-                    <td>{{ v.remarks or '' }}</td>
+                    <td>{{ v.remarks }}</td>
                 </tr>
                 {% endfor %}
             {% else %}
                 <tr>
-                    <td colspan="7" class="no-data">No data available</td>
+                    <td colspan="7" style="text-align:center;color:#888;">No items found.</td>
                 </tr>
             {% endif %}
         </tbody>
     </table>
-    <div class="only-one-item">(Only One Item)</div>
-    <div class="signatures">
-        <div class="sign-block">
-            <div class="label">Issued by</div>
-            <div>CISF No............................</div>
-            <div>Rank:...............................</div>
-            <div>Name:...............................</div>
-            <div class="org">CISF ASG BENGALURU</div>
+    <div class="only-two">(Only Two Items)</div>
+    <div class="signature-row">
+        <div class="signature-block">
+            Issued by<br>
+            CISF No............................<br>
+            Rank:...............................<br>
+            Name:...............................<br>
+            CISF ASG BENGALURU
         </div>
-        <div class="sign-block">
-            <div class="label">Collected by</div>
-            <div>CISF No............................</div>
-            <div>Rank:...............................</div>
-            <div>Name:...............................</div>
-            <div class="org">CISF ASG BENGALURU</div>
+        <div class="signature-block">
+            Collected by<br>
+            CISF No............................<br>
+            Rank:...............................<br>
+            Name:...............................<br>
+            CISF ASG BENGALURU
         </div>
-        <div class="sign-block">
-            <div class="label">Received by</div>
-            <div>CISF No............................</div>
-            <div>Rank:...............................</div>
-            <div>Name:...............................</div>
-            <div class="org">CISF ASG BENGALURU</div>
+        <div class="signature-block">
+            Received by<br>
+            CISF No............................<br>
+            Rank:...............................<br>
+            Name:...............................<br>
+            CISF ASG BENGALURU
         </div>
     </div>
 </div>
