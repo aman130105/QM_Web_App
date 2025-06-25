@@ -139,12 +139,12 @@
         <thead>
             <tr>
                 <th>SL No.</th>
-                <th>Item Name & Description</th>
+                <th>Name of Items</th>
                 <th>Head</th>
-                <th>L/P No.</th>
-                <th>Qty Issue</th>
+                <th>Quantity</th>
+                <th>Ledger Page No.</th>
                 <th>Issue Date</th>
-                <th>Remark</th>
+                <th>Remarks</th>
             </tr>
         </thead>
         <tbody>
@@ -154,9 +154,9 @@
                     <td>{{ loop.index }}</td>
                     <td>{{ v.item_name }}</td>
                     <td>{{ v.head }}</td>
-                    <td>{{ v.lp_no }}</td>
                     <td>{{ v.quantity }}</td>
-                    <td>{{ v.date }}</td>
+                    <td>{{ v.lp_no }}</td>
+                    <td>{{ v.issue_date }}</td>
                     <td>{{ v.remarks }}</td>
                 </tr>
                 {% endfor %}

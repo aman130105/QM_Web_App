@@ -345,7 +345,7 @@
                 <tbody>
                     {% if transactions|length > 0 %}
                         {% for t in transactions %}
-                        <tr>
+                        <tr {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>
                             <td>{{ loop.index }}</td>
                             <td>{{ t.date if t.date else '--' }}</td>
                             <td>{{ t.receive_from if t.receive_from else '-' }}</td>

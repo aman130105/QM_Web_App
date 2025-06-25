@@ -9,6 +9,7 @@ from psycopg2.extras import RealDictCursor
 import pdfkit
 import shutil
 from urllib.parse import urlparse
+from collections import defaultdict
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use environment variable for production
@@ -1331,14 +1332,18 @@ def create_renewal_voucher_table():
 
 @app.route('/renewal_voucher')
 def renewal_voucher():
+    year = request.args.get('year', datetime.now().year)
     office = request.args.get('office', '')
     offices = HeadOfficeManager.get_all_offices()
-    vouchers = RenewalVoucher.get_all(office if office else None)
+    vouchers = []
+    if office:
+        vouchers = get_renewal_voucher_consolidated(office, year)
     return render_template(
         'renewal_voucher.html',
         vouchers=vouchers,
         offices=offices,
-        selected_office=office
+        selected_office=office,
+        selected_year=year
     )
 
 @app.route('/export_renewal_voucher_excel')
@@ -1373,9 +1378,12 @@ def export_renewal_voucher_excel():
 
 @app.route('/export_renewal_voucher_pdf')
 def export_renewal_voucher_pdf():
+    year = request.args.get('year', datetime.now().year)
     office = request.args.get('office', '')
-    vouchers = RenewalVoucher.get_all(office if office else None)
-    rendered = render_template('renewal_voucher_pdf.html', vouchers=vouchers, office=office)
+    vouchers = []
+    if office:
+        vouchers = get_renewal_voucher_consolidated(office, year)
+    rendered = render_template('renewal_voucher_pdf.html', vouchers=vouchers, office=office, year=year)
     options = {
         'enable-local-file-access': None,
         'load-error-handling': 'ignore',
@@ -1383,7 +1391,6 @@ def export_renewal_voucher_pdf():
         'page-size': 'A4',
         'orientation': 'Portrait',
         'margin-top': '18mm',
-        
         'margin-bottom': '18mm',
         'margin-left': '12mm',
         'margin-right': '12mm'
@@ -1525,6 +1532,41 @@ def export_report_pdf():
         download_name="transaction_report.pdf",
         mimetype="application/pdf"
     )
+
+def get_renewal_voucher_consolidated(office, year):
+    conn = get_db_connection()
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    start_date = f"{year}-01-01"
+    end_date = f"{year}-12-31"
+    cur.execute("""
+        SELECT item_name, head, ledger_page_no as lp_no,
+               SUM(qty) as quantity,
+               MIN(date) as first_issue_date,
+               MAX(date) as last_issue_date,
+               STRING_AGG(remarks, '; ') as remarks
+        FROM issued_items
+        WHERE issued_to=%s AND date BETWEEN %s AND %s
+        GROUP BY item_name, head, ledger_page_no
+        ORDER BY item_name
+    """, (office, start_date, end_date))
+    rows = cur.fetchall()
+    conn.close()
+    # Format for template
+    vouchers = []
+    for row in rows:
+        vouchers.append({
+            'item_name': row['item_name'],
+            'head': row['head'],
+            'quantity': row['quantity'],
+            'lp_no': row['lp_no'],
+            'issue_date': row['last_issue_date'],  # or show both min/max if needed
+            'remarks': row['remarks'],
+        })
+    return vouchers
+
+@app.route('/class_master', methods=['GET', 'POST'])
+def class_master():
+    return items_category()
 
 if __name__ == '__main__':
     create_users_table()

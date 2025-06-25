@@ -168,7 +168,7 @@
             {% set data = entries if entries is defined else transactions if transactions is defined else [] %}
             {% if data|length > 0 %}
                 {% for t in data %}
-                <tr class="{% if t.type == 'Receive' %}receive-row{% endif %}">
+                <tr {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>
                     <td>{{ loop.index }}</td>
                     <td>{{ t.date or '--' }}</td>
                     <td>{{ t.receive_from or '-' }}</td>
