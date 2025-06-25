@@ -1012,7 +1012,10 @@ def export_ledger_excel():
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
     cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
     rows = cur.fetchall()
-    conn.close()
+    # Format date and calculate running balance
+    for t in rows:
+        t['date'] = format_date_ddmmyyyy(t['date'])
+    rows = calculate_ledger_running_balance(rows)
     wb = openpyxl.Workbook()
     ws = wb.active
     ws.title = "Ledger"
@@ -1051,6 +1054,27 @@ def get_items_by_category():
     items = Ledger.get_items_by_category(category)
     return jsonify({'items': items})
 
+def calculate_ledger_running_balance(transactions):
+    # Sort by date (ascending), then by type (Receive before Issue on same date)
+    def sort_key(t):
+        try:
+            return (datetime.strptime(t['date'], "%d-%m-%Y"), 0 if t['type'] == 'Receive' else 1)
+        except Exception:
+            return (t['date'], 0 if t['type'] == 'Receive' else 1)
+    transactions.sort(key=sort_key)
+    running_balance = 0
+    for t in transactions:
+        prev_bal = running_balance
+        receive = t.get('receive_qty', 0) or t.get('received', 0) or 0
+        issue = t.get('issue_qty', 0) or t.get('issued', 0) or 0
+        if t.get('type') == 'Receive':
+            running_balance += int(receive)
+        elif t.get('type') == 'Issue':
+            running_balance -= int(issue)
+        t['prev_bal'] = prev_bal
+        t['balance'] = running_balance
+    return transactions
+
 @app.route('/print_ledger')
 def print_ledger():
     category = request.args.get('category')
@@ -1072,7 +1096,6 @@ def print_ledger():
         # Ledger info
         cur.execute("SELECT * FROM ledger WHERE category=%s AND item_name=%s", (category, item))
         item_info = cur.fetchone()
-        # Only include entries that exist in received_items or issued_items (not deleted)
         cur.execute("""
             SELECT * FROM ledger_entries
             WHERE item_name=%s
@@ -1087,6 +1110,8 @@ def print_ledger():
         # Format date as DD-MM-YYYY
         for t in transactions:
             t['date'] = format_date_ddmmyyyy(t['date'])
+        # Calculate running balance
+        transactions = calculate_ledger_running_balance(transactions)
         conn.close()
     return render_template(
         'Print_ledger.html',
@@ -1109,7 +1134,6 @@ def print_ledger_print():
         cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
         cur.execute("SELECT * FROM ledger WHERE category=%s AND item_name=%s", (category, item))
         item_info = cur.fetchone()
-        # Only include entries that exist in received_items or issued_items (not deleted)
         cur.execute("""
             SELECT * FROM ledger_entries
             WHERE item_name=%s
@@ -1121,9 +1145,9 @@ def print_ledger_print():
             ORDER BY TO_DATE(date, 'YYYY-MM-DD') ASC
         """, (item, item, item))
         transactions = cur.fetchall()
-        # Format date as DD-MM-YYYY
         for t in transactions:
             t['date'] = format_date_ddmmyyyy(t['date'])
+        transactions = calculate_ledger_running_balance(transactions)
         conn.close()
     return render_template(
         'print_ledger_print.html',
@@ -1145,7 +1169,9 @@ def export_ledger_pdf():
     item_info = cur.fetchone()
     cur.execute("SELECT * FROM ledger_entries WHERE item_name = %s ORDER BY TO_DATE(date, 'YYYY-MM-DD')", (item,))
     rows = cur.fetchall()
-    conn.close()
+    for t in rows:
+        t['date'] = format_date_ddmmyyyy(t['date'])
+    rows = calculate_ledger_running_balance(rows)
     rendered = render_template(
         'print_ledger_pdf.html',
         item_info=item_info,
@@ -1360,6 +1386,7 @@ def export_renewal_voucher_pdf():
         'page-size': 'A4',
         'orientation': 'Portrait',
         'margin-top': '18mm',
+        
         'margin-bottom': '18mm',
         'margin-left': '12mm',
         'margin-right': '12mm'
