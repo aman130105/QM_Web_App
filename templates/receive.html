@@ -231,6 +231,16 @@ function printReceiveVoucher(receiveId) {
         return;
     }
 
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d)) return dateStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+    const year = data.date ? new Date(data.date).getFullYear() : '';
     const html = `
     <div style="width:210mm;min-height:297mm;padding:0 15mm 0 15mm;font-family:'Arial',sans-serif;font-size:15px;">
         <!-- Top Info Row -->
@@ -248,32 +258,38 @@ function printReceiveVoucher(receiveId) {
                 <div>ISO 9001:2015 Certified</div>
             </div>
         </div>
-        <!-- Heading -->
-        <div style="text-align:center;font-weight:bold;font-size:2rem;margin:32px 0 18px 0;letter-spacing:1px;">
-            ISSUE/EXPENSE/RECEIVE: <span style="color:#d7263d;">VOUCHER</span>
+        <br><br>
+        <div style="text-align:center;font-weight:bold;font-size:2rem;margin:0;letter-spacing:1px;">
+            <u><b>ISSUE/EXPENSE/RECEIVE: <span style="color:#d7263d;">VOUCHER</span></b></u>
         </div>
-        <!-- IV/RV Info Row -->
+        <br><br><br>
         <div style="display:flex;justify-content:space-between;font-size:15px;margin-bottom:0;">
-            <div>
+            <div style="width:50%;text-align:left;">
                 <div>(To be completed by issuing officer)</div>
-                <div>IV No. &nbsp;/CISF/ASG(B)/QM/2025</div>
-                <div>DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025</div>
+                <div>
+                    IV No.<span style="display:inline-block;width:24px;"></span>/CISF/ASG(B)/QM/${data.head || ''}/${year}
+                </div>
+                <div>DATE: <span style="display:inline-block;width:10px;"></span> / <span style="display:inline-block;width:10px;"></span> /${year}</div>
                 <div>CISF UNIT ASG BANGALORE-560300</div>
             </div>
-            <div style="text-align:right;">
+            <div style="width:50%;text-align:right;">
                 <div>(To be completed by receiving officer)</div>
-                <div>RV No. /CISF/ASG(B)/QM/2025</div>
-                <div>DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025</div>
+                <div>
+                    RV No.<span style="display:inline-block;width:24px;"></span>/CISF/ASG(B)/QM/${data.head || ''}/${year}
+                </div>
+                <div>DATE: <b>${formatDate(data.date)}</b></div>
                 <div>CISF UNIT ASG BANGALORE-560300</div>
             </div>
         </div>
-        <!-- Article Info -->
-        <div style="margin:18px 0 0 0;font-size:15px;">
-            This article enumerated below have been received from the following source : <b>${data.head}</b>
+        <br>
+        <div style="margin:0 0 0 0;font-size:15px;">
+            This article enumerated below have been received from the following source : <b>${data.head}</b> in good condition and in accordance with the particulars given below.
         </div>
+        <br>
         <div style="margin-bottom:8px;font-size:15px;">
-            Authority: Dy. Inspector General/CASO, CISF Unit ASG Bangalore
+            <u><b>Authority: Dy. Inspector General/CASO, CISF Unit ASG Bangalore</b></u>
         </div>
+        <br>
         <!-- Table -->
         <table border="1" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:15px;margin-top:8px;">
             <thead>
@@ -289,8 +305,9 @@ function printReceiveVoucher(receiveId) {
                 <tr>
                     <td>1</td>
                     <td>
-                        ${data.item_name}
-                        ${data.remarks && data.remarks.trim() ? `<br><i style="font-size:0.95em;color:#555;">(${data.remarks})</i>` : ""}
+                        <b>${data.category}</b><br>
+                        <i>${data.item_name}</i>
+                        ${data.remarks && data.remarks.trim() ? `<br><span style="font-size:0.95em;color:#555;">(${data.remarks})</span>` : ""}
                     </td>
                     <td><b>${data.head}</b></td>
                     <td>${data.qty}</td>
@@ -309,6 +326,7 @@ function printReceiveVoucher(receiveId) {
                     CISF ASG BENGALURU
                 </div>
             </div>
+        
             <div>
                 <div>Collected by</div>
                 <div>CISF No............................</div>

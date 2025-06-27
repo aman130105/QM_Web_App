@@ -250,7 +250,16 @@ function printVoucher(issueId) {
         return;
     }
 
-    // Prepare voucher HTML (A4 portrait, sample style)
+    const formatDate = (dateStr) => {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d)) return dateStr;
+        const day = String(d.getDate()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const year = d.getFullYear();
+        return `${day}-${month}-${year}`;
+    };
+    const year = data.date ? new Date(data.date).getFullYear() : '';
     const html = `
     <div style="width:210mm;min-height:297mm;padding:0 15mm 0 15mm;font-family:'Arial',sans-serif;font-size:15px;">
         <div style="display:flex;align-items:flex-start;justify-content:center;margin-top:18px;">
@@ -267,30 +276,36 @@ function printVoucher(issueId) {
                 <div>ISO 9001:2015 Certified</div>
             </div>
         </div>
-        <!-- Heading bilkul neeche, margin kam -->
-        <div style="text-align:center;font-weight:bold;font-size:1.4rem;margin:8px 0 10px 0;letter-spacing:1px;">
-            ISSUE/EXPENSE/RECEIVE: <span style="color:#d7263d;">VOUCHER</span>
+        <br><br>
+        <div style="text-align:center;font-weight:bold;font-size:1.4rem;margin:0;letter-spacing:1px;">
+            <u><b>ISSUE/EXPENSE/RECEIVE: <span style="color:#d7263d;">VOUCHER</span></b></u>
         </div>
+        <br><br><br>
         <div style="display:flex;justify-content:space-between;font-size:14px;margin-bottom:0;">
-            <div>
-            <div>
-            <div>
-                <div>IV No. &nbsp;/CISF/ASG(B)/QM/2025</div>
-                <div>DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025</div>
+            <div style="width:50%;text-align:left;">
+                <div>
+                    IV No. /CISF/ASG(B)/QM/${data.head || ''}/${year}
+                </div>
+                <div>DATE: <b>${formatDate(data.date)}</b></div>
                 <div>CISF UNIT ASG BANGALORE-560300</div>
             </div>
-            <div style="text-align:right;">
-                <div>RV No. /CISF/ASG(B)/QM/2025</div>
-                <div>DATE: &nbsp;&nbsp;/&nbsp;&nbsp;/2025</div>
+            <div style="width:50%;text-align:right;">
+                <div>
+                    RV No. /CISF/ASG(B)/QM/${data.head || ''}/${year}
+                </div>
+                <div>DATE: <span style="display:inline-block;width:10px;"></span> / <span style="display:inline-block;width:10px;"></span> /${year}</div>
                 <div>CISF UNIT ASG BANGALORE-560300</div>
             </div>
         </div>
-        <div style="margin:10px 0 0 0;font-size:14px;">
-            This article enumerated below have been issued to : <b>${data.issued_to}</b>
+        <br>
+        <div style="margin:0 0 0 0;font-size:14px;">
+            This article enumerated below have been issued to : <b>${data.issued_to}</b> in good condition in accordance with the rules and regulations of the CISF. The undersigned is responsible for the safe custody of the article and will be liable to pay for any loss or damage caused to it.
         </div>
+        <br>
         <div style="margin-bottom:8px;font-size:14px;">
-            Authority: Dy. Inspector General/CASO, CISF Unit ASG Bangalore
+            <u><b>Authority: Dy. Inspector General/CASO, CISF Unit ASG Bangalore</b></u>
         </div>
+        <br>
         <table border="1" cellpadding="5" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:15px;margin-top:8px;">
             <thead>
                 <tr style="background:#f1f1f1;">
@@ -305,8 +320,9 @@ function printVoucher(issueId) {
                 <tr>
                     <td>1</td>
                     <td>
-                        ${data.item_name}
-                        ${data.remarks && data.remarks.trim() ? `<br><i style="font-size:0.95em;color:#555;">(${data.remarks})</i>` : ""}
+                        <b>${data.category}</b><br>
+                        <i>${data.item_name}</i>
+                        ${data.remarks && data.remarks.trim() ? `<br><span style="font-size:0.95em;color:#555;">(${data.remarks})</span>` : ""}
                     </td>
                     <td>${data.head}</td>
                     <td>${data.qty}</td>
@@ -361,10 +377,8 @@ function printVoucher(issueId) {
     win.document.close();
     win.focus();
     setTimeout(() => {
-        win.print();
-        win.close();
         printArea.style.display = 'none';
-    }, 500);
+    }, 1000);
 }
 </script>
 </body>

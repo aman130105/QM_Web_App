@@ -9,7 +9,6 @@ from psycopg2.extras import RealDictCursor
 import pdfkit
 import shutil
 from urllib.parse import urlparse
-from collections import defaultdict
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'your_secret_key_here')  # Use environment variable for production

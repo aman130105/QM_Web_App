@@ -85,8 +85,8 @@
         <thead>
             <tr>
                 <th>S.No</th>
-                <th>Date</th>
-                <th>Type</th>
+                <th>Category</th>
+                <th>Description</th>
                 <th>Receive From</th>
                 <th>Issue To</th>
                 <th>Prev Bal</th>
@@ -101,8 +101,8 @@
             {% for t in transactions %}
                 <tr>
                     <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ sn }}</td>
-                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.date or '--' }}</td>
-                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.type or '--' }}</td>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.category }}</td>
+                    <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.item_name }}</td>
                     <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.receive_from or '-' }}</td>
                     <td>{{ t.issue_to or '-' }}</td>
                     <td {% if t.type == 'Receive' %}style="color:#d90429;font-weight:bold;"{% endif %}>{{ t.prev_bal if t.prev_bal is not none else 0 }}</td>
