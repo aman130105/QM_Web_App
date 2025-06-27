@@ -158,13 +158,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                 </form>
             </div>
-            <!-- Treeview Table -->
-            <div class="card p-3">
-                <h5 class="mb-3 text-primary"><i class="fa-solid fa-tree me-2"></i>Recent Received Items</h5>
-                <div class="table-responsive">
-                    <table class="table table-bordered table-hover tree-table mb-0">
+        </div>
+    </div>
+    <!-- Treeview Table (full width, edge-to-edge, with S.No) -->
+    <div class="row" style="margin-left:0;margin-right:0;">
+        <div class="col-12" style="padding-left:0;padding-right:0;">
+            <div class="card p-1" style="width:100%;border-radius:0;box-shadow:none;margin:0;">
+                <h5 class="mb-3 text-primary" style="margin-left:8px;"><i class="fa-solid fa-tree me-2"></i>Recent Received Items</h5>
+                <div class="table-responsive" style="width:100%;padding:0;margin:0;">
+                    <table class="table table-bordered table-hover tree-table mb-0" style="width:100%;margin:0;">
                         <thead>
                             <tr>
+                                <th style="width:50px;">S.No</th>
                                 <th>Category</th>
                                 <th>Description</th>
                                 <th>Head</th>
@@ -181,6 +186,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             {% if entries %}
                                 {% for entry in entries %}
                                 <tr>
+                                    <td>{{ loop.index }}</td>
                                     <td>{{ entry.category }}</td>
                                     <td>{{ entry.item_name }}</td>
                                     <td>{{ entry.head }}</td>
@@ -207,14 +213,13 @@ document.addEventListener('DOMContentLoaded', function() {
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="10" class="text-center text-muted">No entries found.</td>
+                                    <td colspan="11" class="text-center text-muted">No entries found.</td>
                                 </tr>
                             {% endif %}
                         </tbody>
                     </table>
                 </div>
             </div>
-            <!-- End Treeview Table -->
         </div>
     </div>
 </div>
